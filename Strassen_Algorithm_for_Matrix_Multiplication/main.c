@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "mytime.h"    // for get_execution_time
 #include "matrix.h"
 #include "strassen.h"
 
@@ -15,6 +14,13 @@ void randomly_fill_matrix(float **A, const size_t A_rows, const size_t A_cols)
    	   A[i][j]=rand()%(2*MAX_ELEM_VALUE)-MAX_ELEM_VALUE;
      }
    }
+}
+
+double get_execution_time(const struct timespec b_time,
+                          const struct timespec e_time)
+{
+  return (e_time.tv_sec-b_time.tv_sec) +
+                   (e_time.tv_nsec-b_time.tv_nsec)/1E9;
 }
 
 int main(int argc, char *argv[]) {
