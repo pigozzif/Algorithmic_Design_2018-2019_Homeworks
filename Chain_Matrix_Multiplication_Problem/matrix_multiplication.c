@@ -41,5 +41,5 @@ float*** matrix_chain(int* P, int n) {
 }
 
 int main(int argc, char *argv[]) {
-  return 0;
+    return 0;
 }
