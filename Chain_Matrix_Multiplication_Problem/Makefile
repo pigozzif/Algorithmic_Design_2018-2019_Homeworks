@@ -1,12 +1,12 @@
-C = gcc
-CFLAGS = -I .
+CC = gcc
+CCFLAGS = -I .
 SRC = $(wildcard *.c)
 TARGET = chain_test.x
 
 all: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(C) $(CFLAGS) -o $@ $^
+	$(CC) $(CCFLAGS) -o $@ $^
 
 .PHONY: clean all
 
