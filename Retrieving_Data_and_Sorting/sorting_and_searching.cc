@@ -5,14 +5,21 @@
 
 #define MAX_VALUE 25
 
-/* The main function includes time tests on the free sorting routines here implemented.
+/** The main function includes time tests on the free sorting routines here implemented.
  * It turns out that, on average, insertion sort is considerably slower, and its execution
  * can grow quadratically with respect to the problem size. On the other side, quicksort tended
  * to perform very well on small problem instances, but was beaten by heapsort on large arrays.
  * In fatc, we now that the latter grows at most as nlogn, whereas quicksort does so only on average.
  */
 
-// swap helper function
+
+/**
+   Swap helper function
+
+   Swaps A[i] and A[j]
+
+   Uses move semantics for efficiency
+*/
 
 template<class T>
 void swap(T* A, const int i, const int j) {
@@ -21,7 +28,13 @@ void swap(T* A, const int i, const int j) {
     A[j] = std::move(temp);
 }
 
-// dichotomic search
+/**
+   Dichotomic search
+
+  Takes the length of array A and a candidate a
+
+  Returns the index position of a in A, -1 if not found
+*/
 
 template<class T>
 int di_find(T* A, const T a, int r) {
@@ -36,7 +49,13 @@ int di_find(T* A, const T a, int r) {
     return -1;
 }
 
-// insertion sort
+/**
+   Insertion sort
+
+   Takes an array to sort and its length
+
+   Applies the aforementioned algorithm in-place
+*/
 
 template<class T>
 void insertion_sort(T* A, const int n) {
@@ -49,7 +68,13 @@ void insertion_sort(T* A, const int n) {
     }
 }
 
-// partition routine
+/**
+   Partition routine, used by Quicksort and Select
+
+   Takes an array to partition, lower and upper bounds l and r, and pivot position
+
+   Returns the index of the final position of the pivot
+*/
 
 template<class T>
 int partition(T* A, int l, int r, int p) {
@@ -69,7 +94,14 @@ int partition(T* A, int l, int r, int p) {
     return r;
 }
 
-// quicksort, avoiding the tail recursion
+/**
+   Quicksort
+
+   Takes an array to sort, lower and upper bounds' indexes, and a pointer to a function
+   used to choose the pivot
+
+   Sorts in-place and avoids the tail recursion
+*/
 
 template<class T>
 void quicksort(T* A, int l, int r, int (*func)(const int, const int)) {
@@ -80,7 +112,13 @@ void quicksort(T* A, int l, int r, int (*func)(const int, const int)) {
     }
 }
 
-// heapsort
+/**
+   Heapsort
+
+   Takes an array to sort and its length
+
+   Sorts in-place by using move semantics and building a max-heap, defined in the heap.h header
+*/
 
 template<class T>
 void heapsort(T* A, const std::size_t n) {
@@ -94,7 +132,13 @@ void heapsort(T* A, const std::size_t n) {
     A = std::move(h.data);
 }
 
-// counting sort. Generalizes to any domain bounded by k1 as the minimum and k2 as the maximum
+/**
+   Counting sort
+
+   Takes an array to sort, the destination array, lower and upper bounds for the domain, and the length of the array
+
+   Does not sort in-place
+*/
 
 template<class T>
 void counting_sort(T* A, T* B, const std::size_t k1, const std::size_t k2, const std::size_t n) {
@@ -117,7 +161,13 @@ void counting_sort(T* A, T* B, const std::size_t k1, const std::size_t k2, const
     delete[] C;
 }
 
-// radix sort
+/**
+   Radix sort
+
+   Takes an array to sort, max number of digits, and the length of the array
+
+   Does not sort in-place, internally uses counting sort modified to work on one digit per time
+*/
 
 template<class T>
 void radix_sort(T* A, const int d, const std::size_t n) {  // d is the max number of digits
@@ -141,7 +191,7 @@ void radix_sort(T* A, const int d, const std::size_t n) {  // d is the max numbe
             B[C[(A[i-1] / j) % 10] - 1] = v;
             --C[(A[i-1] / j) % 10];
         }
-        // save intermdiate result into A
+        // save intermediate result into A
         for (std::size_t i=0; i < n; ++i) {
             A[i] = B[i];
         }
@@ -150,14 +200,16 @@ void radix_sort(T* A, const int d, const std::size_t n) {  // d is the max numbe
     delete[] C;
 }
 
-// bucket sort
+/**
+   Bucket sort
+*/
 
 template<class T>
 class Bucket {
     struct BucketNode {
         T data;
         BucketNode* next;
-        BucketNode(T& val) : data{val}, next{nullptr} {}
+        explicit BucketNode(const T& val) : data{val}, next{nullptr} {}
     };
 
     BucketNode* current;
@@ -165,11 +217,11 @@ class Bucket {
 
   public:
     std::size_t size;
-    Bucket() : size{}, current{nullptr}, head{nullptr} {}
+    Bucket() : current{nullptr}, head{nullptr}, size{} {}
     void append(const T& value) {
         BucketNode node{value};
-        head->next = node;
-        head = node;
+        head->next = &node;
+        head = &node;
         ++size;
     }
     T get() {
@@ -179,14 +231,15 @@ class Bucket {
     }
 };
 
-/*
-template<class T, class Sort, class Args>
-void bucket_sort(T* A, const std::size_t n, Args ... args) {
+
+template<class T>
+void bucket_sort(T* A, const std::size_t n) {
     //Sort sorter{};
     Bucket<T>* B{new Bucket<T>[n]{}};
     for (std::size_t i=0; i < n; ++i) {
-        B[floor(A[i] / n) + 1].append(A[i]);
-    }
+        std::cout << B[int(floor(A[i] * n) + 1)] << std::endl;
+        //B[floor(A[i] * n) + 1].append(A[i]);
+    }/*
     std::size_t i{0};
     for (std::size_t j=0; j < n; ++j) {
         Bucket<T> curr = B[j];
@@ -194,56 +247,22 @@ void bucket_sort(T* A, const std::size_t n, Args ... args) {
             A[i] = curr.get();
             ++i;
         }
-        sorter(curr, args..., );
+        //insertion_sort()
+        //sorter(curr, args..., );
     }
+    for (std::size_t i=0; i < n; ++i) std::cout << A[i] << std::endl;*/
     delete[] B;
 }
+
+/**
+   Main function
 */
-template<class T>
-int select(T*A, int i, int l, int r, int threshold=0);
-
-template<class T>
-int select_pivot(T* A, int l, int r) {
-    for (int i=0; i <= (r - l)/5; ++i) {
-        int a{5*i + l + 4};
-        int k{5*i + l};
-        insertion_sort(A + k, (a > r) ? r - k + 1: a - k + 1);
-    }
-    for (int i=0; i <= (r - l)/5; ++i) {
-        int a{5*i + l + 2};
-        swap(A, l+i, (a > r) ? a : r);
-    }
-    for (int i=l; i < l + (r - l)/5; ++i) std::cout << A[i] << std::endl;
-    auto ans = select(A, ((r - l)/5 + 1)/2, l, l + (r - l)/5);
-    //std::cout << ans;
-    //abort();
-    return ans;
-}
-
-template<class T>
-int select(T* A, int i, int l, int r, int threshold) {
-    if ((r - l) <= threshold) {
-        insertion_sort(A, r - l);
-        //for (int i=l; i < r; ++i) std::cout << A[i] << std::endl;
-        return i;
-    }
-    //std::cout << r << " " << l << std::endl;
-    int j{select_pivot(A, l, r)};
-    int k{partition(A, l, r, j)};
-    if (i == k) {
-        return k;
-    }
-    else if (i < k) {
-        return select(A, i, l, k - 1);
-    }
-    return select(A, i, k + 1, r);
-}
 
 int main() {
     //int test[10] = {13, 5, 7, 2, 1, 4, 1, 11, 6, 1};
     //int test[24] = {13, 5, 7, 2, -7, 4, 1, 11, 6, 0, 10, 15, -1, 8, -2, 3, 14, 12, -9, -5, 9, -6, 16, -4};
-    int test[4] = {3475, 2475, 3471, 1733};
-    radix_sort(test, 4, 4);
+    float test[10] = {0.23, 0.60, 0.20, 0.73, 0.97, 0.34, 0.01, 0.50, 0.78, 0.44};
+    bucket_sort(test, 10);
     //int test2[10];// = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
     //int (*choose_pivot) (const int, const int);   // to be passed to quicksort in order to select the pivot
     //choose_pivot = [] (const int l, const int r) -> int {(void)r; return l;};
@@ -255,7 +274,7 @@ int main() {
     //void (*sort) (int*, 10);
     //sort = &insertion_sort;
     //bucket_sort<int>(test, 10, 10);
-    for (std::size_t i=0; i < 4; ++i) std::cout << test[i] << std::endl;
+    //for (std::size_t i=0; i < 4; ++i) std::cout << test[i] << std::endl;
    /*
     std::cout << "TESTING THE IMPLEMENTATION OF INSERTION_SORT IN THE WORST CASE:" << std::endl;
     for (std::size_t dim : {100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000}) {
