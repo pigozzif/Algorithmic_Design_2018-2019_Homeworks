@@ -260,7 +260,7 @@ void bucket_sort(T* A, const std::size_t n) {
     for (std::size_t j=0; j < n; ++j) {
         auto bucket = B[j];
         bucket.sort();
-        for (std::size_t k=0;k<bucket.size();++k) {
+        for (std::size_t k=0; k < bucket.size(); ++k) {
             A[i] = bucket[k];
              ++i;
         }
