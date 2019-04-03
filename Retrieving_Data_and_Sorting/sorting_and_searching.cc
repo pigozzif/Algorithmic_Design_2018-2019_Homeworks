@@ -215,9 +215,7 @@ class List {
   public:
     List() : free_slots{0}, _size{0}, data{new T[0]} {}
     // returns _size
-    std::size_t size() const noexcept {
-        return _size;
-    }
+    std::size_t size() const noexcept {return _size;}
     // inserts a new value
     void append(const T& value) {
         ++_size;   // otherwise check_and_alloc() would allocate an array of size 0
