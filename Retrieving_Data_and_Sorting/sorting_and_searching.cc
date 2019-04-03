@@ -1,6 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
+#include <forward_list>
 #include "heap.h"
 
 #define MAX_VALUE 25
@@ -104,7 +105,7 @@ int partition(T* A, int l, int r, int p) {
 */
 
 template<class T>
-void quicksort(T* A, int l, int r, int (*func)(const int, const int)) {
+void quicksort(T* A, int l, int r, int (*func)(const int, const int)=[](const int l, const int r) {(void)r; return l;}) {
     while (l < r) {
         int pivot = partition(A, l, r-1, func(l, r));
         quicksort(A, l, pivot, func);
@@ -201,56 +202,69 @@ void radix_sort(T* A, const int d, const std::size_t n) {  // d is the max numbe
 }
 
 /**
-   Bucket sort
+   List class, plays the role of a bucket to be used in bucket_sort. It works as an
+
+   array that is dynamically reallocated as it grows in size. Notice it is not a linked list
 */
 
 template<class T>
-class Bucket {
-    struct BucketNode {
-        T data;
-        BucketNode* next;
-        explicit BucketNode(const T& val) : data{val}, next{nullptr} {}
-    };
-
-    BucketNode* current;
-    BucketNode* head;
-
+class List {
+    std::size_t free_slots;
+    std::size_t _size;
+    T* data;
   public:
-    std::size_t size;
-    Bucket() : current{nullptr}, head{nullptr}, size{} {}
-    void append(const T& value) {
-        BucketNode node{value};
-        head->next = &node;
-        head = &node;
-        ++size;
+    List() : free_slots{0}, _size{0}, data{new T[0]} {}
+    // returns _size
+    std::size_t size() const noexcept {
+        return _size;
     }
-    T get() {
-        T ans{current->data};
-        current = current->next;
-        return ans;
+    // inserts a new value
+    void append(const T& value) {
+        ++_size;   // otherwise check_and_alloc() would allocate an array of size 0
+        check_and_alloc();
+        data[_size - 1] = value;
+        --free_slots;
+    }
+    // sorts the bucket. Uses quicksort
+    void sort() noexcept {
+        quicksort(data,0,_size);
+    }
+    // overload of operator[]
+    T& operator[](const std::size_t i) const noexcept {return data[i];}
+  private:
+    // helper function to dynamically reallocate the array
+    void check_and_alloc() {
+        if (free_slots != 0) return;
+        T* new_data{new T[_size * 2]};
+        for (std::size_t i=0; i < _size; ++i) new_data[i] = data[i];
+        data = std::move(new_data);
+        free_slots = _size;
     }
 };
 
+/**
+   Bucket sort
+
+   Takes an array to sort and its size
+
+   Builds an array of List objects as buckets
+*/
 
 template<class T>
 void bucket_sort(T* A, const std::size_t n) {
-    //Sort sorter{};
-    Bucket<T>* B{new Bucket<T>[n]{}};
+    List<T>* B{new List<T>[n]{}};
     for (std::size_t i=0; i < n; ++i) {
-        std::cout << B[int(floor(A[i] * n) + 1)] << std::endl;
-        //B[floor(A[i] * n) + 1].append(A[i]);
-    }/*
+        B[int(floor(A[i] * n))].append(A[i]);
+    }
     std::size_t i{0};
     for (std::size_t j=0; j < n; ++j) {
-        Bucket<T> curr = B[j];
-        for (std::size_t k=0; k < curr.size; ++k) {
-            A[i] = curr.get();
-            ++i;
+        auto bucket = B[j];
+        bucket.sort();
+        for (std::size_t k=0;k<bucket.size();++k) {
+            A[i] = bucket[k];
+             ++i;
         }
-        //insertion_sort()
-        //sorter(curr, args..., );
     }
-    for (std::size_t i=0; i < n; ++i) std::cout << A[i] << std::endl;*/
     delete[] B;
 }
 
