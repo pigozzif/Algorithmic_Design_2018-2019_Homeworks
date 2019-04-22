@@ -8,7 +8,7 @@ all: $(TARGET)
 $(TARGET): $(SRC)
 	    $(CXX) $(CXXFLAGS) $^ -o $@
 
-$(SRC): ./BST2.h
+$(SRC): ./BST.h
 
 clean:
 	rm $(TARGET)
