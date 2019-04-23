@@ -49,14 +49,6 @@ class BST{
 	node_type* root;
 	//!Function object defining the comparison criteria for key_type objects.
 	Comp compare;
-
-	/**
-	 * Utility function to insert in the BST a full subtree. Elements of the subtree are
-	 * inserted in the BST starting at the root and then recursively inserting the
-	 * left and right subtrees.
-	 * @param subtree to copy into the BST
-	 */
-	void insert( const node_type& subtree);
 	/**
   * Return a pointer to the node having the smallest key.
   */
@@ -106,14 +98,48 @@ class BST{
           }
       }
       x->parent = y;
+      // update new root, if necessary
+      if  (x == root) {
+          root = y;
+      }
   }
+  /**
+   * Perform a rotation to the right with pivot in
+   * @param x, the node
+   */
+   void right_rotate(node_type* y) {
+       if (y == nullptr) return; // no sense to rotate empty subtree
+       else if (y->left_child == nullptr) return;  // no sense to right-rotate node with no left child
+       node_type* x = y->left_child;
+       node_type* beta = x->right_child;
+       x->right_child = y;
+       x->parent = y->parent;
+       y->left_child = beta;
+       if (beta != nullptr) {
+           beta->parent = y;
+       }
+       // update original y's parent, if possible
+       if (y->parent != nullptr) {
+           if (is_right_child(y)) {
+               y->parent->right_child = x;
+           }
+           else {
+               y->parent->left_child = x;
+           }
+       }
+       y->parent = x;
+       // update new root, if necessary
+       if (y == root) {
+           root = x;
+       }
+   }
 
  public:
 	/**
 	 * Create an empty BST. The root pointer is set to nullptr and the compare function is
 	 * default initialized.
 	 */
-	BST() : root{nullptr}, compare{} {}//= default;
+	BST() : root{nullptr}, compare{} {}
   /**
    * Create a BST from std::initializer_list, the compare function is default initialized, nodes
    * are added by repeatedly calling insert
@@ -141,28 +167,28 @@ class BST{
    * non-const begin and end functions. Allow the BST to support range for-loops.
    * begin returns an iterator to the node having the smallest key
    */
-   iterator begin() noexcept {return iterator{get_min()};}
+  iterator begin() noexcept {return iterator{get_min()};}
   /**
    * end returns an iterator to nullptr
    */
-   iterator end() noexcept {return iterator{nullptr};}
+  iterator end() noexcept {return iterator{nullptr};}
   /**
    * const begin and end functions. begin returns a const_iterator to the node with smallest key
    */
-   const_iterator begin() const noexcept {return const_iterator{get_min()};}
+  const_iterator begin() const noexcept {return const_iterator{get_min()};}
   /**
    * returns a const_iterator to nullptr
    */
-   const_iterator end() const noexcept {return const_iterator{nullptr};}
+  const_iterator end() const noexcept {return const_iterator{nullptr};}
   /**
    * cbegin and cend behave like const begin and const end, but can be useful to force an algorithm
    * of the STL to not modify input iterators. cbegin returns a const_iterator to the node with the smallest key
    */
-   const_iterator cbegin() const noexcept {return const_iterator{get_min()};}
+  const_iterator cbegin() const noexcept {return const_iterator{get_min()};}
   /**
    * cend returns a const_iterator to nullptr
    */
-   const_iterator cend() const noexcept {return const_iterator{nullptr};}
+  const_iterator cend() const noexcept {return const_iterator{nullptr};}
 	/**
 	 * Insert a key-value pair in the BST composed by the given key and value.
 	 * @param key the key in the pair
@@ -187,7 +213,7 @@ class BST{
           return;
       }
       node_type* curr{&(*z)};
-      remove(curr);  // call the auxiliary remove
+      remove_aux(curr);  // call the auxiliary remove
   }
   /**
    * Remove a node from the tree
@@ -459,16 +485,6 @@ void BST<K,V,Comp>::insert(const key_type& key, const value_type& value) {
     }
     auto& child = (compare(key, previous_node->data.first)) ? previous_node->left_child : previous_node->right_child;
     child = new node_type{key, value, previous_node};
-}
-
-/*
- * insert function (node_type version)
- */
-template<class K, class V, class Comp>
-void BST<K,V,Comp>::insert(const node_type& subtree){
-    insert(subtree.data); //copy data in target to the new tree
-    if (subtree.left_child) insert(*subtree.left_child); //copy left subtree
-    if (subtree.right_child) insert(*subtree.right_child); //copy right subtree
 }
 
 /**
