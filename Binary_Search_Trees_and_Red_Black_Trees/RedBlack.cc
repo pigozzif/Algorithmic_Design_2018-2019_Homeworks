@@ -9,7 +9,7 @@ namespace internal {
 }
 
 /**
- * Red black tree class. It inherits the public and protected members from the BST class. In addition,
+ * Red-black tree class. It inherits the public and protected members from the BST class. In addition,
  * we use an array of Color for the nodes' colors, such that array[key] = color_of_node_indexed_by_key.
  * Of course, this limits us to integral-like keys, but turned out to be the only feasible solution.
  * Notice the search routine required by the assignment can be safely seen as the 'find' function
