@@ -2,9 +2,9 @@
  * This header file includes an implementation of a binary search tree class as developed by Federico Julian
  * Verdù Camerota and Federico Pigozzi for their Advanced Programming exam at SISSA, winter 2019. With respect
  * to the original version, some details have been changed: 1) All unique_ptrs have been converted to raw pointers,
- * to avoid a deadlock in 'remove'; 2) The 'Tester' class, the 'balance' procedure and their utility functions have
- * been dismissed; 3) A set of members has been moved from private to protected visibility, to allow for inheritance
- * in the RedBlackTree class (see RedBlack.cc file).
+ * to avoid a deadlock in 'remove'; 2) The 'Tester' class, copy and move semantics, the 'balance' procedure and their
+ * utility functions have been dismissed; 3) A set of members has been moved from private to protected visibility, to
+ * allow for inheritance in the RedBlackTree class (see RedBlack.cc file).
  * For what concerns upgrades, different functionalities have been added. In particular:
  * 1) A 'remove' and auxiliary functions have been implemented. You can find them at lines 265-273 and 160-182 respectively.
  * 2) A bunch of useful private functions, including 'family' relations ('uncle', 'grandparent', 'is_right_child'),
