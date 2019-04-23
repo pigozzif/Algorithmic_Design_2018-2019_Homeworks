@@ -1,17 +1,28 @@
+/**
+ * This header file includes an implementation of a binary search tree class as developed by Federico Julian
+ * Verdù Camerota and Federico Pigozzi for their Advanced Programming exam at SISSA, winter 2019. With respect
+ * to the original version, some details have been changed: 1) All unique_ptrs have been converted to raw pointers,
+ * to avoid a deadlock in 'remove'; 2) The 'Tester' class, the 'balance' procedure and their utility functions have
+ * been dismissed; 3) A set of members has been moved from private to protected visibility, to allow for inheritance
+ * in the RedBlackTree class (see RedBlack.cc file).
+ * For what concerns upgrades, different functionalities have been added. In particular:
+ * 1) A 'remove' and auxiliary functions have been implemented. You can find them at lines 265-273 and 160-182 respectively.
+ * 2) A bunch of useful private functions, including 'family' relations ('uncle', 'grandparent', 'is_right_child'),
+ *    right and left rotations, and the 'transplant' routine. You can find them all at lines 65-148 and 443-459.
+ */
+
 #ifndef __BST_H__
 #define __BST_H__
 
 
 #include <functional>
 #include <utility>
-#include <vector>
 #include <stdexcept>
 #include <iostream>
 #include <iterator>
 #include <initializer_list>
 
 namespace internal {
-
     /**
      * BST_Node struct, represents a node in a BST.
      */
@@ -32,28 +43,22 @@ namespace internal {
 template <class K, class V, class Comp = std::less<K>>
 class BST{
 
-    public:
-	//!Alias for the type of keys in the tree
+ public:
+  //!Alias for the type of keys in the tree
 	using key_type = K;
 	//!Alias for the type of values associated to keys in the tree
 	using value_type = V;
 	//!Alias for the key-value pairs stored in the BST. The key is declared as const to prevent it from being changed once in the tree.
 	using pair_type = std::pair<K, V>;
 
-    private:
-
-	//!Alias for the node type
-	using node_type = internal::BST_node<K,V>;//This alias is left private since nodes are not intendend for user usage.
-
+protected:
+  //!Alias for the node type
+  using node_type = internal::BST_node<K,V>;//This alias is left private since nodes are not intendend for user usage.
 	//!Pointer to the root node of the BST
 	node_type* root;
 	//!Function object defining the comparison criteria for key_type objects.
 	Comp compare;
 	/**
-  * Return a pointer to the node having the smallest key.
-  */
-  node_type* get_min(node_type* current=nullptr) const noexcept;
-  /**
    * Transplant function to replace x by y
    * @param x, the node to be replace
    * @param y, the node to substitue
@@ -64,13 +69,22 @@ class BST{
     * @param x the node under discussion
     */
   bool is_right_child(node_type* x) const noexcept {return x->parent != nullptr && x->parent->right_child == x;}
-  node_type* grandparent(const node_type& x) const noexcept {return x.parent->parent;}
-  node_type* uncle(const node_type& x) const noexcept {
-      if (is_right_child(x.parent)) {
-          return grandparent(x).left_child;
+  node_type* grandparent(node_type* x) const noexcept {
+      if (x->parent == nullptr) { // if x does not have a parent, it cannot have a grandparent
+          return nullptr;
       }
       else {
-          return grandparent(x).right_child;
+          return x->parent->parent;
+      }
+  }
+  node_type* uncle(node_type* x) const noexcept {
+      node_type* grand = grandparent(x);
+      if (grand == nullptr) return nullptr; // if x does not have a grandparent, it cannot have an uncle
+      if (is_right_child(x->parent)) {
+          return grand->left_child;
+      }
+      else {
+          return grand->right_child;
       }
   }
   /**
@@ -134,6 +148,49 @@ class BST{
        }
    }
 
+ private:
+   /**
+   * Return a pointer to the node having the smallest key.
+   */
+   node_type* get_min(node_type* current=nullptr) const noexcept;
+   /**
+    * Remove a node from the tree
+    * @param curr the node to start the deletion algorithm from
+    */
+    node_type* remove_aux(node_type* curr) {
+       // if curr has two children
+       if (curr->left_child && curr->right_child) {
+           node_type* successor = curr->find_successor();
+           curr->data = successor->data;
+           remove_aux(successor);
+       }
+       // if curr has only the left child
+       else if (curr->left_child) {
+           transplant(curr, curr->left_child);
+           return curr->left_child;
+       }
+       // if curr has only the right child
+       else if (curr->right_child) {
+           transplant(curr, curr->right_child);
+           return curr->right_child;
+       }
+       // if curr is a leaf
+       else {
+           transplant(curr, nullptr);
+           return nullptr;
+       }
+   }
+   /**
+    * Auxiliary for the above routine
+    */
+   void in_order_walk_aux(node_type* x) {
+       if (x != nullptr) {
+           in_order_walk_aux(x->left_child);
+           std::cout << x->data.first << ": " << x->data.second << std::endl;
+           in_order_walk_aux(x->right_child);
+       }
+   }
+
  public:
 	/**
 	 * Create an empty BST. The root pointer is set to nullptr and the compare function is
@@ -151,8 +208,7 @@ class BST{
 	/**
 	 * Default destructor
 	 */
-	~BST() noexcept = default;
-
+	virtual ~BST() noexcept = default;
 	//!Alias for iterators
 	using iterator = internal::BST_iterator<K,V>;
 	//!Alias for const iterators
@@ -194,7 +250,7 @@ class BST{
 	 * @param key the key in the pair
 	 * @param value the value in the pair
 	 */
-	void insert(const key_type& key, const value_type& value);
+	virtual void insert(const key_type& key, const value_type& value);
 	/**
 	 * Insert a key-value pair in the BST.
 	 * @param pair the key-value pair to insert
@@ -203,57 +259,23 @@ class BST{
 	    insert(pair.first, pair.second);
 	}
   /**
-   * Remove a key-value pair from the BST.
+   * Remove a key-value pair from the BST, and return a pointer to the 'substitute'
    * @param key the key to use for the deletion
    */
-  void remove(const key_type& key) {
+  node_type* remove(const key_type& key) {
       iterator z{find(key)};
       // if the key is not in the tree, simply return
       if (z == end()) {
-          return;
+          return nullptr;
       }
       node_type* curr{&(*z)};
-      remove_aux(curr);  // call the auxiliary remove
-  }
-  /**
-   * Remove a node from the tree
-   * @param curr the node to start the deletion algorithm from
-   */
-  void remove_aux(node_type* curr) {
-      // if curr has two children
-      if (curr->left_child && curr->right_child) {
-          node_type* successor = curr->find_successor();
-          curr->data = successor->data;
-          remove_aux(successor);
-      }
-      // if curr has only the left child
-      else if (curr->left_child) {
-          transplant(curr, curr->left_child);
-      }
-      // if curr has only the right child
-      else if (curr->right_child) {
-          transplant(curr, curr->right_child);
-      }
-      // if curr is a leaf
-      else {
-          transplant(curr, nullptr);
-      }
+      return remove_aux(curr);  // call the auxiliary remove
   }
   /**
    * In-order walk of the tree
    */
   void in_order_walk() {
       in_order_walk_aux(root);
-  }
-  /**
-   * Auxiliary for the above routine
-   */
-  void in_order_walk_aux(node_type* x) {
-      if (x != nullptr) {
-          in_order_walk_aux(x->left_child);
-          std::cout << x->data.first << ": " << x->data.second << std::endl;
-          in_order_walk_aux(x->right_child);
-      }
   }
 	/**
 	 * Remove all key-value pairs from the BST.
@@ -283,10 +305,10 @@ namespace internal {
     template<class K, class V>
     struct BST_node {
 
-	    using pair_type=typename BST<K,V>::pair_type;
-	    using key_type=typename BST<K,V>::key_type;
-	    using value_type=typename BST<K,V>::value_type;
-	    using node_type=BST_node<K,V>;
+	    using pair_type = typename BST<K,V>::pair_type;
+	    using key_type = typename BST<K,V>::key_type;
+	    using value_type = typename BST<K,V>::value_type;
+	    using node_type = BST_node<K,V>;
 
 	    //! Pointers to left and right child of the node
 	    node_type* left_child;
@@ -351,7 +373,7 @@ template<class K, class V>
 class BST_iterator : public std::iterator<std::forward_iterator_tag, std::pair<const K,V>>{
 
         using pair_type = typename BST<K,V>::pair_type;
-        using node_type=BST_node<K,V>;
+        using node_type = BST_node<K,V>;
         //! a pointer to the node the iterator is currently over
 
     public:
@@ -388,7 +410,7 @@ class BST_iterator : public std::iterator<std::forward_iterator_tag, std::pair<c
 namespace internal {
 template<class K, class V>
 class BST_const_iterator : public BST_iterator<K,V> {
-    using node_type=BST_node<K,V>;
+    using node_type = BST_node<K,V>;
     using base = BST_iterator<K,V>;
     using pair_type = typename BST<K,V>::pair_type;
      public:
