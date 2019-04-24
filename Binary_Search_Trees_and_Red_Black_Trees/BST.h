@@ -68,7 +68,9 @@ protected:
     * "Family" relations among nodes
     * @param x the node under discussion
     */
-  bool is_right_child(node_type* x) const noexcept {return x->parent != nullptr && x->parent->right_child == x;}
+  bool is_right_child(node_type* x) const noexcept {
+      return x->parent != nullptr && x->parent->right_child == x;
+  }
   node_type* grandparent(node_type* x) const noexcept {
       if (x->parent == nullptr) { // if x does not have a parent, it cannot have a grandparent
           return nullptr;
@@ -85,6 +87,17 @@ protected:
       }
       else {
           return grand->right_child;
+      }
+  }
+  node_type* sibling(node_type* x) const noexcept {
+      if (x->parent == nullptr) {
+          return nullptr;
+      }
+      if (is_on_right(x)) {
+          return x->parent->left_child;
+      }
+      else {
+          return x->parent->right_child;
       }
   }
   /**
@@ -147,46 +160,64 @@ protected:
            root = x;
        }
    }
-
+   /**
+    * Remove a node from the tree
+    * @param curr the node to start the deletion algorithm from
+    */
+   node_type* remove_aux(node_type* curr) {
+      // if curr has two children
+      if (curr->left_child && curr->right_child) {
+          node_type* successor = curr->find_successor();
+          curr->data = successor->data;
+          return remove_aux(successor);
+      }
+      // if curr has only the left child
+      else if (curr->left_child) {
+          transplant(curr, curr->left_child);
+          return curr->left_child;
+      }
+      // if curr has only the right child
+      else if (curr->right_child) {
+          transplant(curr, curr->right_child);
+          return curr->right_child;
+      }
+      // if curr is a leaf
+      else {
+          transplant(curr, nullptr);
+          return nullptr;
+      }
+   }
  private:
    /**
    * Return a pointer to the node having the smallest key.
    */
    node_type* get_min(node_type* current=nullptr) const noexcept;
    /**
-    * Remove a node from the tree
-    * @param curr the node to start the deletion algorithm from
-    */
-    node_type* remove_aux(node_type* curr) {
-       // if curr has two children
-       if (curr->left_child && curr->right_child) {
-           node_type* successor = curr->find_successor();
-           curr->data = successor->data;
-           remove_aux(successor);
-       }
-       // if curr has only the left child
-       else if (curr->left_child) {
-           transplant(curr, curr->left_child);
-           return curr->left_child;
-       }
-       // if curr has only the right child
-       else if (curr->right_child) {
-           transplant(curr, curr->right_child);
-           return curr->right_child;
-       }
-       // if curr is a leaf
-       else {
-           transplant(curr, nullptr);
-           return nullptr;
-       }
-   }
-   /**
     * Auxiliary for the above routine
     */
    void in_order_walk_aux(node_type* x) {
        if (x != nullptr) {
            in_order_walk_aux(x->left_child);
-           std::cout << x->data.first << ": " << x->data.second << std::endl;
+           //std::cout << x->data.first << ": " << x->data.second << std::endl;
+           std::cout << "I am " << x->data.first;
+           if (x->parent != nullptr) {
+               std::cout << ", I am son of " << x->parent->data.first;
+           }
+           else {
+               std::cout << ", I am son of nobody ";
+           }
+           if (x->left_child != nullptr) {
+                 std::cout << ", my left child is " << x->left_child->data.first;
+           }
+           else {
+                 std::cout << ", my left child is nobody ";
+           }
+           if (x->right_child != nullptr) {
+               std::cout << " and my right child is " << x->right_child->data.first << std::endl;
+           }
+           else {
+               std::cout << " and my right child is nobody" << std::endl;
+           }
            in_order_walk_aux(x->right_child);
        }
    }
@@ -262,14 +293,16 @@ protected:
    * Remove a key-value pair from the BST, and return a pointer to the 'substitute'
    * @param key the key to use for the deletion
    */
-  node_type* remove(const key_type& key) {
+  virtual void remove(const key_type& key) {
       iterator z{find(key)};
       // if the key is not in the tree, simply return
       if (z == end()) {
-          return nullptr;
+          return;
       }
       node_type* curr{&(*z)};
-      return remove_aux(curr);  // call the auxiliary remove
+      node_type* dummy = remove_aux(curr);  // call the auxiliary remove
+      (void)dummy;  // suppress unused variable warning
+      return;
   }
   /**
    * In-order walk of the tree
