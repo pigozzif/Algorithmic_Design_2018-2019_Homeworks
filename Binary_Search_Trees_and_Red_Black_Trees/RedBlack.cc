@@ -83,7 +83,7 @@ class RedBlackTree : public BST<K,V,Comp> {
      * Fix the tree as in case 1.
      */
     node_type* fix_case1(node_type* z) {
-        // black color z's uncle and parent black
+        // color z's uncle and parent black
         colors[base::uncle(z)->data.first] = Color::black;
         colors[z->parent->data.first] = Color::black;
         // red color z's grandpa, new z is z's grandpa
@@ -94,28 +94,33 @@ class RedBlackTree : public BST<K,V,Comp> {
     /**
      * Fix the tree as in case 2
      */
-    node_type* fix_case2(node_type* z) {
-        // rotate left on z's parent, new z is z's parent
-        node_type* p = z->parent;
-        base::left_rotate(p);
-        return p;
+    node_type* fix_case2(node_type* z, node_type* p) {
+        // rotate left on z's parent
+        if (base::is_right_child(z) && !base::is_right_child(p)) {  // if parent is not right child, uncle must be right child
+            base::left_rotate(p);
+            z = z->left_child;
+        }
+        else if (!base::is_right_child(z) && base::is_right_child(p)) {  // is parent is right child, uncle must be left child
+            base::right_rotate(p);
+            z = z->right_child;
+        }
+        return z;
     }
     /**
      * Fix the tree as in case 3. Notice the function does not return any node,
      * since we are assured it will solve the problem
      */
-    void fix_case3(node_type* z) {
-        // invert z's parent and grandpa colors
-        node_type* grand = base::grandparent(z);
-        colors[z->parent->data.first] = Color::black;
-        colors[grand->data.first] = Color::red;
+    void fix_case3(node_type* z, node_type* p, node_type* g) {
         // rotate on z's grandpa
-        if (base::is_right_child(z)) {
-            base::right_rotate(grand);
+        if (!base::is_right_child(z)) {
+            base::right_rotate(g);
         }
         else {
-            base::left_rotate(grand);
+            base::left_rotate(g);
         }
+        // invert z's parent and grandpa colors
+        colors[p->data.first] = Color::black;
+        colors[g->data.first] = Color::red;
     }
 
   public:
@@ -125,37 +130,37 @@ class RedBlackTree : public BST<K,V,Comp> {
      */
     RedBlackTree() : base::BST{}, size{0}, colors{new Color[size]} {}
     /**
-     * Insert into the Red-Black tree a key, value pair, following the algorithm explained in class
+     * Insert into the Red-Black tree a key-value pair, following the algorithm explained in class
      */
     void insert(const key_type& key, const value_type& value) override {
         // return pointer to the node as if it were a BST
         node_type* curr = BSTinsert(key, value);
-        if (curr->parent == nullptr) return; // if the node is the root, the tree is trivially balanced
-        else if (base::uncle(curr) == nullptr) {  // if the node has no uncle, either the parent or grandparent is the root, then black color it
-            colors[curr->data.first] = Color::black;
-            return;
-        }
-        // if the node has an uncle, we can always choose among cases 1, 2, 3
-        while (curr->parent != nullptr && base::grandparent(curr) != nullptr && colors[curr->parent->data.first] == Color::red) {
-            switch(colors[base::uncle(curr)->data.first]) {
-                case Color::red :
-                    // CASE 1: uncle is red
-                    // removes the problem or pushes towards the root
-                    curr = fix_case1(curr);
-                case Color::black :
-                    if (base::is_right_child(curr) && base::is_right_child(base::uncle(curr))) {
-                        // CASE 2: uncle is black, uncle and curr are right children
-                        // brings to case 3
-                        curr = fix_case2(curr);
-                    }
-                    // CASE 3: uncle is black, uncle and curr are right and left children
-                    // solves the problem
-                    fix_case3(curr);
-                default : break;
+        while (true) {
+            // if the node is the root, black color it and we are done
+            if (curr->parent == nullptr) {
+                colors[curr->data.first] = Color::black;  // to preserve the second property
+                return;
+            }
+            // if the node's parent is black: done
+            else if (colors[curr->parent->data.first] == Color::black) {
+                return;
+            }
+            else if (base::uncle(curr) != nullptr && colors[base::uncle(curr)->data.first] == Color::red) {
+                // CASE 1: uncle is red
+                // removes the problem or pushes towards the root
+                curr = fix_case1(curr);
+            }
+            else {
+                node_type* p = curr->parent;
+                node_type* g = base::grandparent(curr);
+                // CASE 2: uncle is black, uncle and curr are both right or left children
+                // brings to case 3
+                curr = fix_case2(curr, p);
+                // CASE 3: uncle is black, uncle and curr are right and left children
+                // solves the problem
+                fix_case3(curr, p, g);
             }
         }
-        // make sure second property is not violated
-        colors[base::root->data.first] = Color::black;
     }
     /**
      * Default destructor
@@ -169,7 +174,7 @@ int main() {
     RedBlackTree<int,double> rbt{};
     for (auto elem : {6, 5, 4, 1, 2, 7, 8, 3, 9}) {
         //std::cout << "#####" << std::endl;
-        rbt.insert(elem, 0.0);
+        rbt.insert(std::pair<int,double>(elem, 0.0));
         //std::cout << rbt;
     }
     //RedBlackTree<int,double> rbt{};
