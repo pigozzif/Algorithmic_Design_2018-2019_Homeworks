@@ -90,10 +90,11 @@ protected:
       }
   }
   node_type* sibling(node_type* x) const noexcept {
-      if (x->parent == nullptr) {
+      if (x->parent == nullptr) {  // no sibling if the node is the root
           return nullptr;
       }
-      if (is_on_right(x)) {
+      // otherwise, simply return the child of parent on the other side of x
+      if (is_right_child(x)) {
           return x->parent->left_child;
       }
       else {
