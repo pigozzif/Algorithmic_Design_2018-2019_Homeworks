@@ -25,8 +25,9 @@ class RedBlackTree : public BST<K,V,Comp> {
     using value_type = typename base::value_type;
     using pair_type = typename base::pair_type;
     using Color = internal::Color;
+    using red = Color::red;
+    using black = Color::black;
 
-    int size;  // length of the colors array
     std::unordered_map<K, Color> colors;  // to store the colors of the nodes; supports fast lookup, constant in the average case
     /**
      * Helper function to return the color of a given node
@@ -34,9 +35,6 @@ class RedBlackTree : public BST<K,V,Comp> {
      * Returning by reference allows us to change the color
      */
     Color& color(node_type* x) noexcept {
-        //if (x == nullptr) {
-        //    return Color::black;  // by convention, red-black null leaves are black
-        //}
         return colors[x->data.first];
     }
     /**
@@ -46,7 +44,7 @@ class RedBlackTree : public BST<K,V,Comp> {
     node_type* BSTinsert(const key_type& key, const value_type& value) {
         if (base::root == nullptr) { //check if the BST is empty
             base::root = new node_type{key, value, nullptr};
-            color(base::root) = Color::black;  // black color the root
+            color(base::root) = black;  // black color the root
             return base::root;
         }
         node_type* previous_node{base::root}; //initialize previous node to root
@@ -74,19 +72,19 @@ class RedBlackTree : public BST<K,V,Comp> {
         else {
             previous_node->right_child = child;
         }
-        color(child) = Color::red; // red color it
+        color(child) = red; // red color it
         return child;
     }
     /**
-     * Fix the tree as in case 1.
+     * Fix the tree as in case 1
      */
     node_type* fix_case1(node_type* z) {
         // color z's uncle and parent black
-        color(base::uncle(z)) = Color::black;
-        color(z->parent) = Color::black;
+        color(base::uncle(z)) = black;
+        color(z->parent) = black;
         // red color z's grandpa, new z is z's grandpa
         node_type* grand = base::grandparent(z);
-        color(grand) = Color::red;
+        color(grand) = red;
         return grand;
     }
     /**
@@ -95,16 +93,12 @@ class RedBlackTree : public BST<K,V,Comp> {
     node_type* fix_case2(node_type* z, node_type* p) {
         // rotate left on z's parent
         if (base::is_right_child(z) && !base::is_right_child(p)) {  // if parent is not right child, uncle must be right child
-            //std::cout << "case 3, right and left" << std::endl;
             base::left_rotate(p);
-            //z = z->left_child;
         }
         else if (!base::is_right_child(z) && base::is_right_child(p)) {  // is parent is right child, uncle must be left child
-            //std::cout << "case 3, left and right" << std::endl;
             base::right_rotate(p);
-            //z = z->right_child;
         }
-        return p;//z;
+        return p;
     }
     /**
      * Fix the tree as in case 3. Notice the function does not return any node,
@@ -113,11 +107,9 @@ class RedBlackTree : public BST<K,V,Comp> {
     void fix_case3(node_type* z, node_type* p, node_type* g) {
         // rotate on z's grandpa
         if (!base::is_right_child(z)) {
-            //std::cout << "case 4, left" << std::endl;
             base::right_rotate(g);
         }
         else {
-            //std::cout << "case 4, right" << std::endl;
             base::left_rotate(g);
         }
         // invert z's parent and grandpa colors
@@ -135,7 +127,7 @@ class RedBlackTree : public BST<K,V,Comp> {
      * Default constructor. Delegates the base constructor, initializes size to 0 and
      * allocates memory for the colors' array
      */
-    RedBlackTree() : base::BST{}, size{0}, colors{} {}
+    RedBlackTree() : base::BST{}, colors{} {}
     /**
      * Insert into the Red-Black tree a key-value pair, following the algorithm explained in class
      */
@@ -145,23 +137,19 @@ class RedBlackTree : public BST<K,V,Comp> {
         while (true) {
             // if the node is the root, black color it and we are done
             if (curr->parent == nullptr) {
-                //std::cout << "case 0" << std::endl;
-                color(curr) = Color::black;  // to preserve the second property
+                color(curr) = black;  // to preserve the second property
                 return;
             }
             // if the node's parent is black: done
-            else if (color(curr) == Color::black) {
-                //std::cout << "case 1" << std::endl;
+            else if (color(curr) == black) {
                 return;
             }
-            else if (base::uncle(curr) != nullptr && color(base::uncle(curr)) == Color::red) {
-                //std::cout << "case 2" << std::endl;
+            else if (base::uncle(curr) != nullptr && color(base::uncle(curr)) == red) {
                 // CASE 1: uncle is red
                 // removes the problem or pushes towards the root
                 curr = fix_case1(curr);
             }
             else {
-                //std::cout << "case 3" << std::endl;
                 node_type* p = curr->parent;
                 node_type* g = base::grandparent(curr);
                 // CASE 2: uncle is black, uncle and curr are both right or left children
@@ -176,9 +164,9 @@ class RedBlackTree : public BST<K,V,Comp> {
     void delete_case1(node_type* x) {
         if (x->parent != nullptr) {
             node_type* s = base::sibling(x);
-            if (color(s) == Color::red) {
-                color(x->parent) = Color::red;
-                color(s) = Color::black;
+            if (color(s) == red) {
+                color(x->parent) = red;
+                color(s) = black;
             }
             if (!base::is_right_child(x)) {
                 base::left_rotate(x->parent);
@@ -190,9 +178,9 @@ class RedBlackTree : public BST<K,V,Comp> {
         //delete_case2(x, s);
     }
     void delete_case2(node_type* x, node_type* s) {
-        if ((color(x->parent) == Color::black) && (color(s) == Color::black) &&
-      (color(s->left_child) == Color::black) && (color(s->right_child) == Color::black)) {
-            color(s) = Color::red;
+        if ((color(x->parent) == black) && (color(s) == black) &&
+      (color(s->left_child) == black) && (color(s->right_child) == black)) {
+            color(s) = red;
             delete_case1(x->parent);
         }
         else {
@@ -200,27 +188,27 @@ class RedBlackTree : public BST<K,V,Comp> {
         }
     }
     void delete_case3(node_type* x, node_type* s) {
-      if ((color(x->parent) == Color::red) && (color(s) == Color::black) &&
-    (color(s->left_child) == Color::black) && (color(s->right_child) == Color::black)) {
-          color(s) = Color::red;
-          color(x->parent) = Color::black;
+      if ((color(x->parent) == red) && (color(s) == black) &&
+    (color(s->left_child) == black) && (color(s->right_child) == black)) {
+          color(s) = red;
+          color(x->parent) = black;
       }
       else {
           delete_case4(x, s);
       }
     }
     void delete_case4(node_type* x, node_type* s) {
-        if (color(s) == Color::black) {
-            if ((!base::is_right_child(x)) && (color(s->right_child) == Color::black)
-              && (color(s->left_child) == Color::red)) {
-                color(s) = Color::red;
-                color(s->left_child) = Color::black;
+        if (color(s) == black) {
+            if ((!base::is_right_child(x)) && (color(s->right_child) == black)
+              && (color(s->left_child) == red)) {
+                color(s) = red;
+                color(s->left_child) = black;
                 base::right_rotate(s);
             }
             else if ((base::is_right_child(x)) && (color(s->left_child) == Color::black)
-              && (color(s->right_child) == Color::red)) {
-                color(s) = Color::red;
-                color(s->right_child) = Color::black;
+              && (color(s->right_child) == red)) {
+                color(s) = red;
+                color(s->right_child) = black;
                 base::left_rotate(s);
             }
         }
@@ -228,13 +216,13 @@ class RedBlackTree : public BST<K,V,Comp> {
     }
     void delete_case5(node_type* x, node_type* s) {
         color(s) = color(x->parent);
-        color(x->parent) = Color::black;
+        color(x->parent) = black;
         if (!base::is_right_child(x)) {
-            color(s->right_child) = Color::black;
+            color(s->right_child) = black;
             base::left_rotate(x->parent);
         }
         else {
-            color(s->left_child) = Color::black;
+            color(s->left_child) = black;
             base::right_rotate(x->parent);
         }
     }
@@ -246,9 +234,9 @@ class RedBlackTree : public BST<K,V,Comp> {
         }
         node_type* y{&(*z)};
         node_type* x = base::remove_aux(y);  // call the auxiliary remove and return pointer to 'substitute'
-        if (color(y) == Color::black) {
-            if (color(x) == Color::red) {
-                color(x) = Color::black;
+        if (color(y) == black) {
+            if (color(x) == red) {
+                color(x) = black;
             }
             else {
                 delete_case1(x);
@@ -257,19 +245,19 @@ class RedBlackTree : public BST<K,V,Comp> {
         if (x == nullptr) {return;}
         //std::cout << "passed it!" << std::endl;
         switch(color(y)) {
-            case Color::red :
+            case red :
                 return;
-            case Color::black :
-                if (color(x) == Color::red) {
-                    color(x) = Color::black;
+            case black :
+                if (color(x) == red) {
+                    color(x) = black;
                     return;
                 }
                 else {
                     bool x_is_right = base::is_right_child(x);
                     node_type* sibling = (x_is_right) ? x->parent->left_child : x->parent->right_child;
-                    if (color(sibling) == Color::red) {
-                        color(sibling) = Color::black;
-                        color(x->parent) = (color(x->parent) == Color::red) ? Color::black : Color::red;
+                    if (color(sibling) == red) {
+                        color(sibling) = black;
+                        color(x->parent) = (color(x->parent) == red) ? black : red;
                         if (base::is_right_child(x)) {
                             base::right_rotate(x->parent);
                         }
@@ -277,30 +265,30 @@ class RedBlackTree : public BST<K,V,Comp> {
                             base::left_rotate(x->parent);
                         }
                     }
-                    else if (color(sibling) == Color::black && (sibling->left_child != nullptr || color(sibling) == Color::black) && (sibling->right_child != nullptr || color(sibling) == Color::black)) {
-                        color(sibling) = Color::red;
+                    else if (color(sibling) == black && (sibling->left_child != nullptr || color(sibling) == black) && (sibling->right_child != nullptr || color(sibling) == black)) {
+                        color(sibling) = red;
                     }
-                    else if (color(sibling) == Color::black) {
-                        if ((x_is_right && color(sibling->right_child) == Color::red && color(sibling->left_child) == Color::black) || (!x_is_right && color(sibling->left_child) == Color::red && color(sibling->right_child) == Color::black)) {
+                    else if (color(sibling) == black) {
+                        if ((x_is_right && color(sibling->right_child) == red && color(sibling->left_child) == black) || (!x_is_right && color(sibling->left_child) == red && color(sibling->right_child) == black)) {
                             if (x_is_right) {
                                 base::left_rotate(sibling);
                             }
                             else {
                                 base::right_rotate(sibling);
                             }
-                            color(sibling) = Color::red;
+                            color(sibling) = red;
                             node_type* new_sibling = (x_is_right) ? x->parent->left_child : x->parent->right_child;
-                            color(new_sibling) = (color(new_sibling) == Color::red) ? Color::black : Color::red;
+                            color(new_sibling) = (color(new_sibling) == red) ? black : red;
                         }
                         else {
-                            color(sibling) = Color::red;
-                            color(x->parent) = (color(x->parent) == Color::red) ? Color::black : Color::red;
+                            color(sibling) = red;
+                            color(x->parent) = (color(x->parent) == red) ? black : red;
                             if (x_is_right) {
-                                color(sibling->left_child) = Color::black;
+                                color(sibling->left_child) = black;
                                 base::right_rotate(x->parent);
                             }
                             else {
-                                color(sibling->right_child) = Color::black;
+                                color(sibling->right_child) = black;
                                 base::left_rotate(x->parent);
                             }
                         }
@@ -315,15 +303,14 @@ class RedBlackTree : public BST<K,V,Comp> {
     ~RedBlackTree() = default;
 };
 
-// REMEMBER NULLPTR LEAVES ACCOUNT AS BLACK NODES
 int main() {
     //BST<int,double> bst{};
     RedBlackTree<int,double> rbt{};
-    //for (auto elem : {6, 2, 1, 4, 3, 5}) {//{6, 5, 4, 1, 2, 7, 8, 3, 9}) {
+    for (auto elem : {6, 2, 1, 4, 3, 5}) {//{6, 5, 4, 1, 2, 7, 8, 3, 9}) {
         //std::cout << "#####" << std::endl;
-    //    rbt.insert(elem, 0.0);
+        rbt.insert(elem, 0.0);
         //std::cout << rbt;
-    //}
+    }
     //RedBlackTree<int,double> rbt{};
     //internal::RedBlackNode<int,double> dummy{1, 0.0, nullptr, internal::Color::red};
     //std::cout << dummy.data.first << " " << dummy.data.second << " " << std::endl;
@@ -332,8 +319,8 @@ int main() {
     //}
     //rbt.remove(5);
     //std::cout << rbt;
-    //rbt.test_color();
-    //bst.in_order_walk();
+    rbt.test();
+    //rbt.in_order_walk();
     //std::cout << bst;
     return 0;
 }
