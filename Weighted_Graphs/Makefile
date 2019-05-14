@@ -14,4 +14,4 @@ $(TARGET): $(SRC)
 clean:
 	  rm $(TARGET)
 
-$(SRC): ./queue.h ../Heaps/heap.h
+$(SRC): ./graph_utilities.h ../Heaps/heap.h

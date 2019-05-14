@@ -1,6 +1,6 @@
 #include <iostream>
 #include <chrono>
-#include <queue.h>
+#include <graph_utilities.h>
 #include <heap.h>
 
 
@@ -8,7 +8,7 @@
   * Run Dijkstra's SSSP algorithm on a graph, given the an array of Vertex instances, their number and a reference to the source vertex.
   * The representation of the graph is given by an adjacency matrix, since the adjacency list representation turned out to be somewhat complex
   * to program without the STL. The complexity is Theta(|V|^2 + |E|) with an array-based implementation of the queue data structure (the class
-  * 'Queue' coming from the queue.h header), while O(log|V| * (|V| + |E|)) with a BinaryHeap data sructure, which had been implemented in the
+  * 'Queue' coming from the graph_utilities.h header), while O(log|V| * (|V| + |E|)) with a BinaryHeap data sructure, which had been implemented in the
   * heap.h header for a previous assignment. Notice the template defines the queue data structure to use.
   */
 template<class Q>

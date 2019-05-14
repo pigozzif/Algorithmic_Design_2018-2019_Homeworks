@@ -1,75 +1,10 @@
 #include <iostream>
 #include <math.h> // for INT_MAX
 
-
 /**
-  * Dynamic array implementation. It stores an array of data and provides a reallocation mechanism for better
-  * memory management, so that it can gradually grow in size. It is intended to be used inside 'bucket_sort' for
-  * the buckets, as well as the list of buckets, and in Dijkstra's algorithm as an adjacency list implementation.
+  * This header file includes structs and classes used by the Dijkstra's algorithm implementation of dijkstra.cc
   */
 
-template<class T>
-class List {
-    std::size_t free_slots;  // how many slots are still available
-    std::size_t _size;  // index of the next element that will be inserted
-    T* data;
-    /**
-      * Helper function to dynamically reallocate the array
-      */
-    void check_and_alloc() {
-        if (free_slots != 0) return;  // if there is room left, do nothing
-        T* new_data{new T[_size + 1]}; // since the distribution over the buckets is uniform, we can reallocate by one without significant loss of efficiency
-        // copy all the elements into new array
-        for (std::size_t i=0; i < _size; ++i) {
-            new_data[i] = data[i];
-        }
-        data = std::move(new_data);  // move semantics are fast and memory efficient
-        free_slots = _size;
-    }
-
-  public:
-    /**
-      * Default constructor
-      */
-    List() = default;
-    List(const std::size_t n) : free_slots{n}, _size{0}, data{new T[free_slots]} {}
-    /**
-      * Begin and end functions, necessary to support the range for loop over the List. They return an iterator
-      * to the first element of 'data' and to the first past the last one, respectively.
-      */
-    T* begin() const {return &data[0];}
-    T* end() const {return &data[_size];}
-    /**
-      * Returns the size
-      */
-    std::size_t size() const noexcept {return _size;}
-    /**
-      * Appends a new value at the end of the list, reallocates if necessary (yes in
-      * bucket sort, not in Dijkstra's algorithm
-      */
-    void append(const T& value) {
-        check_and_alloc();
-        data[_size] = value;
-        ++_size;
-        --free_slots;
-    }
-    /**
-      * Sort the bucket using quicksort
-      */
-    void sort() noexcept {
-        quicksort(data, 0, _size);
-    }
-    /**
-      * Overload of operator[], list[i] returns data[i]
-      */
-    T& operator[](const std::size_t i) const noexcept {return data[i];}
-    /**
-      * Destructor
-      */
-    ~List() {delete[] data;}
-};
-
-//struct Pair;  // preemptive declaration to be used in 'Vertex'
 
 /**
   * Implementation of the vertex data structure, to be used as part of a graph. The members have been modeled in function
@@ -99,29 +34,6 @@ struct Vertex {
       */
     ~Vertex() = default;
 };
-
-/**
-  * Struct to encapsulate the index of a vertex together with a weight. This is intended to represent an edge
-  * in the adjacency list of a Vertex instance. Without loss of generality, we can use integers for the vertices.
-  * Notice this implementation is quite close to the std::pair of the STL, defined in the <utility> header.
-  */
-
-//struct Pair {
-//    int vertex;  // the vertex of the (v, w) pair
-//    int weight;  // the weight of the (v, w) pair
-    /**
-      * Default constructor
-      */
-//    Pair() = default;
-    /**
-      * Constructs a Pair from v, w
-      */
-//    Pair(const int v, const int w) : vertex{v}, weight{w} {}
-    /**
-      * Default destructor
-      */
-//    ~Pair() = default;
-//};
 
 /**
   * Function object for Vertex comparisons. Notice the overloads of the operator() allow us to compare two
