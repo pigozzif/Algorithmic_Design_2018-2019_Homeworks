@@ -31,7 +31,8 @@ class List {
     /**
       * Default constructor
       */
-    List() : free_slots{0}, _size{0}, data{new T[_size]} {}
+    List() = default;
+    List(const std::size_t n) : free_slots{n}, _size{0}, data{new T[free_slots]} {}
     /**
       * Begin and end functions, necessary to support the range for loop over the List. They return an iterator
       * to the first element of 'data' and to the first past the last one, respectively.
@@ -68,7 +69,7 @@ class List {
     ~List() {delete[] data;}
 };
 
-struct Pair;  // preemptive declaration to be used in 'Vertex'
+//struct Pair;  // preemptive declaration to be used in 'Vertex'
 
 /**
   * Implementation of the vertex data structure, to be used as part of a graph. The members have been modeled in function
@@ -82,7 +83,7 @@ struct Vertex {
     int index;  // index of the vertex
     int d;  // distance
     int pred;  // predecessor in the shortest-paths tree
-    List<Pair> neighbors;  // adjacency list of the neighbors
+    //int* neighbors;  // adjacency list of the neighbors
     bool on_queue;  // if the vertex is still in the queue
     /**
       * Default constructor
@@ -92,13 +93,7 @@ struct Vertex {
       * Constructs a node from a given index. Notice all the nodes are assumed to be on the queue at the beginning.
       * Even if this might sound like a weird assumption, remember that this implementation is Dijkstra-focused.
       */
-    Vertex(const int idx) : index{idx}, d{INT_MAX}, pred{-1}, neighbors{}, on_queue{true} {}
-    /**
-      * Append a new neighbor in the adjacency list
-      */
-    void add_neighbor(const Pair& pair) noexcept {
-        neighbors.append(pair);
-    }
+    Vertex(const int idx) : index{idx}, d{INT_MAX}, pred{-1}, on_queue{true} {}
     /**
       * Default destructor
       */
@@ -111,23 +106,28 @@ struct Vertex {
   * Notice this implementation is quite close to the std::pair of the STL, defined in the <utility> header.
   */
 
-struct Pair {
-    int vertex;  // the vertex of the (v, w) pair
-    int weight;  // the weight of the (v, w) pair
+//struct Pair {
+//    int vertex;  // the vertex of the (v, w) pair
+//    int weight;  // the weight of the (v, w) pair
     /**
       * Default constructor
       */
-    Pair() = default;
+//    Pair() = default;
     /**
       * Constructs a Pair from v, w
       */
-    Pair(const int v, const int w) : vertex{v}, weight{w} {}
+//    Pair(const int v, const int w) : vertex{v}, weight{w} {}
     /**
       * Default destructor
       */
-    ~Pair() = default;
-};
+//    ~Pair() = default;
+//};
 
+/**
+  * Function object for Vertex comparisons. Notice the overloads of the operator() allow us to compare two
+  * instances of Vertex, or a Vertex with an integer. All comparisons are based on the member 'd', the distance.
+  * To be passed as a template parameter to the BinaryHeap in Dijkstra's algorithm.
+  */
 struct CompareVertex {
     CompareVertex() = default;
     bool operator()(const Vertex& a, const Vertex&b) const noexcept {
@@ -198,8 +198,8 @@ class Queue {
       * Notice that returning by reference allows us to update the distance as if it were
       * UPDATE_DISTANCE. Complexity is Theta(1)
       */
-    int& operator[](const std::size_t i) {
-        return data[i];
+    void decrease(const std::size_t i, const int value) {
+        data[i] = value;
     }
     /**
       * Destructor
