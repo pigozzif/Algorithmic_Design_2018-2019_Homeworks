@@ -1,5 +1,5 @@
 CC = gcc
-CCFLAGS = -o4 -I .
+CCFLAGS = -Wall -Wextra -o4 -I .
 SRC = $(wildcard *.c)
 TARGET = strassen_test.x
 

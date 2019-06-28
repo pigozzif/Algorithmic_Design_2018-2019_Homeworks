@@ -2,6 +2,10 @@
 
 #include "matrix.h"
 
+/**
+  * Sum blocks of 'A' and 'B' storing the output in 'C', with
+  * given offsets for the three matrices
+  */
 void sum_matrix_blocks(float **C,
                        const size_t C_f_row,
                        const size_t C_f_col,
@@ -63,6 +67,10 @@ void naive_aux(float **C, const size_t C_f_row, const size_t C_f_col,
    }
 }
 
+/**
+  * Perform Strassen's matrix multiplication algorithm on a subset
+  * of the original problem
+  */
 void strassen_aux(float **C, const size_t C_f_row, const size_t C_f_col,
                float **A, const size_t A_f_row, const size_t A_f_col,
                float **B, const size_t B_f_row, const size_t B_f_col,
@@ -249,14 +257,20 @@ void strassen_aux(float **C, const size_t C_f_row, const size_t C_f_col,
                     n2);
 
   for (int i=0; i<10; i++) {
-    deallocate_matrix(S[i], n2);
+      deallocate_matrix(S[i], n2);
   }
 
   for (int i=0; i<7; i++) {
-    deallocate_matrix(P[i], n2);
+      deallocate_matrix(P[i], n2);
   }
 }
 
+/**
+  * Wrapper function to perform the Strassen's matrix
+  * multiplication algorithm on matrices 'A' and 'B', storing
+  * the result in 'C', and applying the required offsets to the
+  * auxiliary function
+  */
 void strassen(float **C,
       float **A, float **B, const size_t n)
 {
