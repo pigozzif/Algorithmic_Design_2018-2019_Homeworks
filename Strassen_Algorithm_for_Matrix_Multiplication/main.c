@@ -1,12 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <sys/time.h>
 
 #include "matrix.h"
 #include "strassen.h"
 
 #define MAX_ELEM_VALUE 25  // max possible value for a matrix element
 
+/**
+  * This function returns the seconds elapsed since the
+  * start of the Unix epoch on 1 January, 1970
+  */
+double seconds() {
+    struct timeval tmp;
+    double sec;
+    gettimeofday(&tmp, (struct timezone *)0);
+    sec = tmp.tv_sec + ((double)tmp.tv_usec) / 1000000.0;
+    return sec;
+}
 /**
   * Fill a matrix 'A' with random values. The matrix is of size
   * 'A_rows'x'A_cols'
@@ -42,22 +53,27 @@ int main() {
   randomly_fill_matrix(A, n, n);
   randomly_fill_matrix(B, n, n);
 
-  //struct timespec b_time, e_time;
   // perform measurements
   for (size_t i=1; i<=n; i*=2) {
       printf("%ld", i);
 
-      //clock_gettime(CLOCK_REALTIME, &b_time);
+      double start = seconds();
+      improved_strassen2(C0, A, B, i);
+      double end = seconds();
+
+      printf("\t%f", end - start);
+
+      start = seconds();
       improved_strassen(C0, A, B, i);
-      //clock_gettime(CLOCK_REALTIME, &e_time);
+      end = seconds();
 
-      //printf("\t%lf", get_execution_time(b_time, e_time));
+      printf("\t%f", end - start);
 
-      //clock_gettime(CLOCK_REALTIME, &b_time);
+      start = seconds();
       strassen(C1, A, B, i);
-      //clock_gettime(CLOCK_REALTIME, &e_time);
+      end = seconds();
 
-      //printf("\t%lf", get_execution_time(b_time, e_time));
+      printf("\t%f", end - start);
       // check correctness
       printf("\t%d\n", same_matrix(C0, i, i, C1, i, i));
 }

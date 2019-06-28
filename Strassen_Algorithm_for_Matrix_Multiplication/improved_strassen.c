@@ -1,15 +1,20 @@
 
-/* Speedup, especially for very large matrices, has been achieved by reducing to
- * 1/7th of the total the space for the matrices P. In fact, we can initially (after the
- * computation of the S matrices) store four of the 7 Ps each in one of the Cs. Then,
- * use a smart sequence of addititions/subtractions among the Cs and auxiliary matrix
- * (as big as a generic P) to complete the remaining Ps one after the other.
- * Subsequently, another improved version of the algorithm is offered, in which we apply
- * the same reasoning of before to the S matrices, instead of the Ps. In particular, it
- * can be noticed from the pseudocode of the algorithm that we need only one or two Ss at
- * a time (that is, to compute a given P). In this way, we move from the original 10 Ss
- * to only 2.
- */
+/** A first version of an improved algorithm has been achieved by reducing to
+  * 1/7th of the total the space for the matrices P. In fact, we can initially (after the
+  * computation of the S matrices) store four of the 7 Ps each in one of the Cs. Then,
+  * use a smart sequence of addititions/subtractions among the Cs and auxiliary matrix
+  * (as big as a generic P) to complete the remaining Ps one after the other.
+  * Subsequently, another improved version of the algorithm is offered, in which we apply
+  * the same reasoning of before to the S matrices, instead of the Ps. In particular, it
+  * can be noticed from the pseudocode of the algorithm that we need only one or two Ss at
+  * a time (that is, to compute a given P). In this way, we move from the original 10 Ss
+  * to only 2. For what concerns speedup, both versions showed an improved over the naive
+  * one, but the decrease in time was more pronounced for the second version. According to me,
+  * the reason for this is that the second version reduces the number of S matrices by 8, against
+  * the 6 Ps eliminated by the first (S and P matrices have the same dimension within the same
+  * recursive call). Moreover, the first version needs to compute a lot more summations and subtractions
+  * to get to the final Cs, increasing also how much the algorithm is compute-bound.
+  */
 
 #include <stdlib.h>
 
