@@ -41,15 +41,16 @@ size_t** matrix_chain(size_t* dim, size_t n) {
             IDX(s, i, j) = j - 1;
             // perform the dynamic programming step
             for (size_t k = i + 1; k < j; ++k) {
-                size_t c = IDX(m, i, k) + IDX(m, k + 1, j) + dim[i] * dim[j + 1] * dim[k + 1];
-                if (c < IDX(m, i, j)) {
-                    IDX(m, i, j) = c;
+                size_t q = IDX(m, i, k) + IDX(m, k + 1, j) + dim[i] * dim[j + 1] * dim[k + 1];
+                if (q < IDX(m, i, j)) {
+                    IDX(m, i, j) = q;
                     IDX(s, i, j) = k;
                 }
             }
         }
     }
-    // deallocate and return the s matrix
+    // deallocate (we cannot call deallocate_matrix because the rows have differing
+    // length) and return the s matrix
     for (size_t i = 0; i < n; i++) {
         free(m[i]);
     }
@@ -86,7 +87,7 @@ float*** build_problem_instance(size_t *dims, const size_t n) {
   * according to MAX_VALUE up to 'n' values
   */
 size_t* build_dimensions(const size_t n) {
-    size_t *dims = (size_t*)malloc(sizeof(size_t) * (n + 1));
+    size_t* dims = (size_t*)malloc(sizeof(size_t) * (n + 1));
     for (size_t i=0; i < n + 1; ++i) {
         dims[i] = rand() % MAX_VALUE;  // choose randomly number up to MAX_VALUE
     }
@@ -98,7 +99,7 @@ size_t* build_dimensions(const size_t n) {
   * 'S' should be the output of the optimal parenthetization algorithm, while 'i' and 'j' tell us
   * which subchain of matrices to consider. This problem is easily solved in a recursive fashion.
   */
-float** evaluate_CMM_aux(float ***As, size_t *dims, const size_t n, size_t **S, size_t i, size_t j) {
+float** compute_matrix_chain_aux(float ***As, size_t *dims, const size_t n, size_t **S, size_t i, size_t j) {
     // if there is only one matrix, return it (by copying)
     if (i == j) {
         return copy_matrix(As[i], dims[i], dims[j + 1]);
@@ -106,9 +107,9 @@ float** evaluate_CMM_aux(float ***As, size_t *dims, const size_t n, size_t **S, 
     // optimal parenthetization for the subchain i,..., j
     size_t p = IDX(S, i, j);
     // optimal parenthetization for the subchain i, ..., p
-    float** C1 = evaluate_CMM_aux(As, dims, n, S, i, p);
+    float** C1 = compute_matrix_chain_aux(As, dims, n, S, i, p);
     // optimal parenthetization for the subchain p + 1, ..., j
-    float** C2 = evaluate_CMM_aux(As, dims, n, S, p + 1, j);
+    float** C2 = compute_matrix_chain_aux(As, dims, n, S, p + 1, j);
     // allocate matrix for result, whose dimension is trivially ixj+1
     float** R = allocate_matrix(dims[i], dims[j + 1]);
     // perform naive matrix multiplication
@@ -124,9 +125,9 @@ float** evaluate_CMM_aux(float ***As, size_t *dims, const size_t n, size_t **S, 
   * 'As' with dimensions 'dims', with optimal parenthetization plan 'S'.
   * 'n' is the length of the 'dims' array.
   */
-float **evaluate_CMM(float ***As, size_t *dims, const size_t n, size_t **S) {
+float** compute_matrix_chain(float ***As, size_t *dims, const size_t n, size_t **S) {
     // return the main routine, with subchain from 0 to n - 1
-    return evaluate_CMM_aux(As, dims, n, S, 0, n - 1);
+    return compute_matrix_chain_aux(As, dims, n, S, 0, n - 1);
 }
 
 /**
@@ -134,7 +135,7 @@ float **evaluate_CMM(float ***As, size_t *dims, const size_t n, size_t **S) {
   * the naive algorithm that incrementally multiplies one matrix after the other,
   * starting from the first one
   */
-float** evaluate_naive_CMM(float ***As, size_t *dims, const size_t n) {
+float** compute_naive_matrix_chain(float ***As, size_t *dims, const size_t n) {
   float** C = copy_matrix(As[0], dims[0], dims[1]);
   float** R;
   for (size_t i = 1; i < n; i++) {
@@ -150,9 +151,9 @@ int main() {
   //number of total matrices
   size_t n = 10;
   // initialize the dimensions
-  size_t *dims = build_dimensions(n);
+  size_t* dims = build_dimensions(n);
   // allocate matrices
-  float ***As = build_problem_instance(dims, n);
+  float*** As = build_problem_instance(dims, n);
   // time facilities
   struct timespec start, end;
   double accum;
@@ -163,8 +164,8 @@ int main() {
       clock_gettime(CLOCK_REALTIME, &requestStart);
       // evaluate performance for dynamic programming algorithm
       for (int r = 0; r < N_REPETITIONS; r++) {
-          size_t **S = matrix_chain(dims, d);
-          float **R = evaluate_CMM(As, dims, d, S);
+          size_t** S = matrix_chain(dims, d);
+          float** R = compute_matrix_chain(As, dims, d, S);
           deallocate_matrix(R, dims[0]);
           deallocate_matrix((float**)S, d);
       }
@@ -176,7 +177,7 @@ int main() {
       clock_gettime(CLOCK_REALTIME, &start);
       // evaluate performance for the naive algorithm
       for (int r = 0; r < N_REPETITIONS; ++r) {
-          float **R = evaluate_naive_CMM(As, dims, d);
+          float **R = compute_naive_matrix_chain(As, dims, d);
           deallocate_matrix(R, dims[0]);
       }
       clock_gettime(CLOCK_REALTIME, &end);
