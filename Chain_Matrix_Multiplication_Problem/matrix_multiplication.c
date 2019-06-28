@@ -1,11 +1,18 @@
+/**
+  * This code implements the algorithm for finding the optimal parenthetization
+  * as explained in lecture. In the main function (bottom of the script), we evaluate
+  * its perfomarmance on a set of instances of the problem and compare with the
+  * naive solution. What we witness is a drastic increase in the time gap (in favor
+  * of our algorithm) as the number of the matrices involved goes up.
+  */
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <sys/time.h>
 #include "matrix.h"
 
 #define MAX_VALUE 500  // maximum possible dimension
 #define N_REPETITIONS 3  // number of repetititions for the timings
-#define BILLION 1E9
 // since the 'm' and 's' matrices of the algorithm are half-filled,
 // we can optimize memory consumption by compacting the rows to the left;
 // this macro returns the "compacted" index corresponding to the
@@ -147,22 +154,33 @@ float** compute_naive_matrix_chain(float ***As, size_t *dims, const size_t n) {
   return C;
 }
 
+/**
+  * This function returns the number of second elapsed since
+  * the start of the Unix epoch on 1 January, 1970
+  */
+double seconds() {
+    struct timeval tmp;
+    double sec;
+    gettimeofday(&tmp, (struct timezone*)0);
+    sec = tmp.tv_sec + ((double)tmp.tv_usec) / 1000000.0;
+    return sec;
+}
+
 int main() {
   // random seed
   srand(123);
   //number of total matrices
-  size_t n = 10;
+  size_t n = 15;
   // initialize the dimensions
   size_t* dims = build_dimensions(n);
   // allocate matrices
   float*** As = build_problem_instance(dims, n);
   // time facilities
-  struct timespec start, end;
-  double accum;
+  double acc;
   printf("Input Size\tOptimal Solution\tNaive Solution\n");
   for (size_t d = 1; d < n; d++) {
       printf("%ld", d);
-      clock_gettime(CLOCK_REALTIME, &requestStart);
+      double start = seconds();
       // evaluate performance for dynamic programming algorithm
       for (int r = 0; r < N_REPETITIONS; r++) {
           size_t** S = matrix_chain(dims, d);
@@ -170,22 +188,19 @@ int main() {
           deallocate_matrix(R, dims[0]);
           deallocate_matrix((float**)S, d);
       }
-      clock_gettime(CLOCK_REALTIME, &end);
+      double end = seconds();
 
-      accum = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / BILLION;
-
-      printf("\t%lf", (accum / N_REPETITIONS));
-      clock_gettime(CLOCK_REALTIME, &start);
+      acc = end - start;
+      printf("\t%lf", (acc / N_REPETITIONS));
+      start = seconds();
       // evaluate performance for the naive algorithm
       for (int r = 0; r < N_REPETITIONS; ++r) {
           float **R = compute_naive_matrix_chain(As, dims, d);
           deallocate_matrix(R, dims[0]);
       }
-      clock_gettime(CLOCK_REALTIME, &end);
-
-      accum = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / BILLION;
-
-      printf("\t%lf\n", (accum / N_REPETITIONS));
+      end = seconds();
+      acc = end - start;
+      printf("\t%lf\n", (acc / N_REPETITIONS));
   }
   // deallocate
   for (size_t i = 0; i < n; i++) {
