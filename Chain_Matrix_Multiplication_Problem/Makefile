@@ -1,5 +1,5 @@
 CC = gcc
-CCFLAGS = -I .
+CCFLAGS = -o4 -Wall -Wextra -I .
 SRC = $(wildcard *.c)
 TARGET = chain_test.x
 
