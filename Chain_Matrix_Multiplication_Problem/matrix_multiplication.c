@@ -148,6 +148,8 @@ float** compute_naive_matrix_chain(float ***As, size_t *dims, const size_t n) {
 }
 
 int main() {
+  // random seed
+  srand(123);
   //number of total matrices
   size_t n = 10;
   // initialize the dimensions
@@ -157,7 +159,6 @@ int main() {
   // time facilities
   struct timespec start, end;
   double accum;
-
   printf("Input Size\tOptimal Solution\tNaive Solution\n");
   for (size_t d = 1; d < n; d++) {
       printf("%ld", d);
