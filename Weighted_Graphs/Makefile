@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -I . -I ../Heaps
+CXXFLAGS = -std=c++11 -Wall -Wextra -o4 -I . -I ../Heaps
 
 SRC = dijkstra.cc
 TARGET = dijkstra.x
