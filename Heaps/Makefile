@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -I .
+CXXFLAGS = -std=c++11 -Wall -Wextra -o4 -I .
 TARGET = heap_test.x
 
 all: $(TARGET)
