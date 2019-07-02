@@ -1,9 +1,8 @@
 /**
  * This header file includes an implementation of a binary search tree class as developed by Federico Julian
  * Verdù Camerota and Federico Pigozzi for their Advanced Programming exam at SISSA, winter 2019. With respect
- * to the original version, some details have been changed: 1) All unique_ptrs have been converted to raw pointers,
- * to avoid a deadlock in 'remove'; 2) The 'Tester' class, copy and move semantics, the 'balance' procedure and their
- * utility functions have been dismissed; 3) A set of members has been moved from private to protected visibility, to
+ * to the original version, some details have been changed: 1) The 'Tester' class, copy and move semantics, the 'balance' procedure and their
+ * utility functions have been dismissed; 2) A set of members has been moved from private to protected visibility, to
  * allow for inheritance in the RedBlackTree class (see RedBlack.cc file).
  * For what concerns upgrades, different functionalities have been added. In particular:
  * 1) A 'remove' and auxiliary functions have been implemented. You can find them at lines 265-273 and 160-182 respectively.
@@ -60,16 +59,31 @@ protected:
 	Comp compare;
 	/**
    * Transplant function to replace x by y
-   * @param x, the node to be replace
-   * @param y, the node to substitue
+   * @param x, the node to be replaced
+   * @param y, the node to perform the substitution
    */
-  void transplant(node_type* x, node_type* y);
+  void transplant(node_type* x, node_type* y) {
+      if (y != nullptr) {  // update y's parent, if any
+          y->parent = x->parent;
+      }
+      if (x == root) {  // x is the root, update 'root' member
+          root = y;
+      }
+      else {  // x has a parent, attach y in place of x
+          if (is_right_child(x)) {
+              x->parent->right_child = y;
+          }
+          else {
+              x->parent->left_child = y;
+          }
+      }
+  }
    /**
     * "Family" relations among nodes
     * @param x the node under discussion
     */
   bool is_right_child(node_type* x) const noexcept {
-      return x->parent != nullptr && x->parent->right_child == x;
+      return x != nullptr && x->parent != nullptr && x->parent->right_child == x;
   }
   node_type* grandparent(node_type* x) const noexcept {
       if (x->parent == nullptr) { // if x does not have a parent, it cannot have a grandparent
@@ -81,7 +95,9 @@ protected:
   }
   node_type* uncle(node_type* x) const noexcept {
       node_type* grand = grandparent(x);
-      if (grand == nullptr) return nullptr; // if x does not have a grandparent, it cannot have an uncle
+      if (grand == nullptr) {
+          return nullptr; // if x does not have a grandparent, it cannot have an uncle
+      }
       if (is_right_child(x->parent)) {
           return grand->left_child;
       }
@@ -106,8 +122,13 @@ protected:
    * @param x, the node
    */
   void left_rotate(node_type* x) {
-      if (x == nullptr) return; // no sense to rotate empty subtree
-      else if (x->right_child == nullptr) return;  // no sense to left-rotate node with no right child
+      if (x == nullptr) {
+          return; // no sense to rotate empty subtree
+      }
+      else if (x->right_child == nullptr) {
+          return;  // no sense to left-rotate node with no right child
+      }
+      // update beta and y
       node_type* y = x->right_child;
       node_type* beta = y->left_child;
       y->left_child = x;
@@ -133,11 +154,16 @@ protected:
   }
   /**
    * Perform a rotation to the right with pivot in
-   * @param x, the node
+   * @param y, the node
    */
    void right_rotate(node_type* y) {
-       if (y == nullptr) return; // no sense to rotate empty subtree
-       else if (y->left_child == nullptr) return;  // no sense to right-rotate node with no left child
+       if (y == nullptr) {
+           return; // no sense to rotate empty subtree
+       }
+       else if (y->left_child == nullptr) {
+           return;  // no sense to right-rotate node with no left child
+       }
+       // update beta and x
        node_type* x = y->left_child;
        node_type* beta = x->right_child;
        x->right_child = y;
@@ -304,6 +330,7 @@ protected:
       node_type* dummy = remove_aux(curr);  // call the auxiliary remove
       (void)dummy;  // suppress unused variable warning
       return;
+      //return remove_aux(curr);
   }
   /**
    * In-order walk of the tree
@@ -469,27 +496,6 @@ typename BST<K,V,Comp>::node_type* BST<K,V,Comp>::get_min(node_type* current) co
         current = current->left_child;
     }
     return current;
-}
-
-/*
- * transplant function
- */
-template<class K, class V, class Comp>
-void BST<K,V,Comp>::transplant(node_type* x, node_type* y) {
-    if (y != nullptr) {  // update y's parent
-        y->parent = x->parent;
-    }
-    if (x == root) {  // x is the root
-        root = y;
-    }
-    else {  // x has a parent, attach y in place of x
-        if (is_right_child(x)) {
-            x->parent->right_child = y;
-        }
-        else {
-            x->parent->left_child = y;
-        }
-    }
 }
 
 /*
