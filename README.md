@@ -4,3 +4,5 @@ This is the repository for the assignments given in the Algorithmic Design part 
 Author: Federico Pigozzi
 
 Degree: Data Science and Scientific Computing (DSSC)
+
+Detailed information about the completion of each assignment can be found in the individual folders
