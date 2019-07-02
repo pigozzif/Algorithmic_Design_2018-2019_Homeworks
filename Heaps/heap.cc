@@ -1,23 +1,23 @@
 #include <iostream>
-#include <functional>
 #include <chrono>
-//#include <sys/time.h>
 
 #include "heap.h"
 // maximum value for the heap elements
 #define MAX_VALUE 25
 
 /**
-  * This function returns the number of second elapsed since
-  * the start of the Unix epoch on 1 January, 1970
-  *//*
-double seconds() {
-    struct timeval tmp;
-    double sec;
-    gettimeofday(&tmp, (struct timezone*)0);
-    sec = tmp.tv_sec * 1000000.0 + tmp.tv_usec;
-    return sec;
-}*/
+  * Function object to play the role of 'std::greater' of the STL.
+  * To be used to create a max-heap
+  */
+template<class T>
+struct CompareItems {
+    // default constructor
+    CompareItems() = default;
+    // overload of operator(); returns true if a > b, false otherwise
+    bool operator()(const T a, const T b) {
+        return a > b;
+    }
+};
 
 int main() {
     // in the following, tests will be made using the functionalities of the
@@ -38,7 +38,7 @@ int main() {
         { //new scope to make sure the destructor of BinaryHeap gets called before the next iteration,
           // to avoid subtle memory leaks
             // build a max-heap of int, having elements in 'test' and dimensions 'dim'
-            BinaryHeap<int, std::greater<int>> h{test, dim};
+            BinaryHeap<int, CompareItems<int>> h{test, dim};
             h[0] = 0.0;    // break heap property, so that a call to heapify on the root makes sense
             // measure time
             //double start = seconds();

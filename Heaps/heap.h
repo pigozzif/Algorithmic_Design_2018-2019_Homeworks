@@ -7,7 +7,7 @@
 // some useful macros to define heap invariants
 #define LEFT(x) 2*x + 1
 #define RIGHT(x) 2*x + 2
-#define PARENT(x) floor((x - 1) / 2)
+#define PARENT(x) (x - 1) / 2
 #define GET_ROOT() 0
 #define IS_ROOT(x) x == 0
 
@@ -21,20 +21,20 @@ template<class T, class Comp>
 struct BinaryHeap {
     // data
     std::size_t size;  // size of the heap
-    std::size_t free_slots;  // free slots in the array representation
     T* data;  // array of elements
     Comp compare;  // comparison operator
     // constructor (BUILD_HEAP procedure). Notice the call to std::move allows us to implement heapsort in place.
     // Takes the 'array' to take elements from, its size 'n', and a boolean flag 'inplace'
-    BinaryHeap(T* array, const std::size_t n, const bool inplace=false) : size{n}, free_slots{0}, data{new T[size]}, compare{} {
+    BinaryHeap(T* array, const std::size_t n, const bool inplace=false) : size{n}, data{}, compare{} {
         if (inplace) {
             // repositioning the pointer allows us to work with one copy of the same array.
             // Notice that, as a result, any change to the heap array will be reflected on
             // the outer array as well
             data = array;
         }
-        // if build is not in-place, copy elements one by one from 'array'
+        // if build is not in-place, allocate an array on the heap and copy elements one by one from 'array'
         else {
+            data = new T[size];
             for (std::size_t i=0; i < size; ++i) {
                 data[i] = array[i];
             }
@@ -44,21 +44,21 @@ struct BinaryHeap {
             heapify(i);
         }
     }
-    // overload of operator[], returns by reference
+    // overload of operator[], returns by reference. Used in Dijkstra's algorithm implementation
     T& operator[](const std::size_t i) noexcept {
         return data[i];
     }
     bool is_empty() const noexcept {
         return size == 0;
     }
-    // HEAP_MINIMUM procedure to remove the minimum, or whatever optimum
+    // HEAP_MINIMUM procedure to remove the minimum, or whatever optimum.
+    // Instrumented for Dijkstra's algorithm
     int extract_min() noexcept {
         // extract the root and replace it with the rightmost leaf
         int ans = data[0].index;
         data[0] = data[size - 1];
         // update size and free space
         --size;
-        ++free_slots;
         // call heapify on the root
         heapify(GET_ROOT());
         return ans;
@@ -74,20 +74,18 @@ struct BinaryHeap {
         // push the problem one level up to the root
         bubble_up(i);
     }
-    // same as above, but using an integer as new value. Necessary for binary heap-based implementation of Dijkstra's algorithm
-    void decrease(std::size_t i, const int value);
-    // HEAP_INSERT procedure. In the pseudocode provided, the last node is initialized to the maximum possible
-    // value with respect to the comparison operator, before being updated to 'value'. Here we decided to skip
-    // this part, since its implementation would have required the creation of an ad-hoc class overriding the
-    // usual comparison operators in such a way to behave as a maximum, with no gain in terms of correctness
-    /*void insert(const T& value) {
-        check_and_alloc();
-        decrease(size, value);
-        //data[size] = value;
-        //bubble_up(size);
-        ++size;
-        --free_slots;
-    }*/
+    // Same as above, but using an integer as new value. Necessary for binary heap-based implementation of
+    // Dijkstra's algorithm, since the 'DECREASE' operation applies specifically to the .d member of the
+    // Vertex class
+    void decrease(std::size_t i, const int value) {
+        // if the value does not imply a decrease, abort the program
+        if (compare(data[i], value)) {
+            std::cout << "value is not smaller than H[i]" << std::endl;
+            abort();
+        }
+        data[i].d = value;
+        bubble_up(i);
+    }
     // HEAPIFY routine, iterative version
     void heapify(std::size_t i) noexcept {
           std::size_t m{i};
@@ -122,14 +120,6 @@ struct BinaryHeap {
     }
     // utility function to check whether an index corresponds to a valid node
     bool is_valid_node(const std::size_t i) const noexcept {return size-1 >= i;}
-    // utility function to manage reallocation. For simplicity, it doubles the array each time
-    /*void check_and_alloc() {
-        if (free_slots != 0) return;
-        T* new_data{new T[size * 2]};
-        for (std::size_t i=0; i < size; ++i) new_data[i] = data[i];
-        data = std::move(new_data);
-        free_slots = size;
-    }*/
     // bubble-up helper function
     void bubble_up(std::size_t i) noexcept {
         // if the node is not the root and violates the heap propriety with respect to
@@ -141,15 +131,7 @@ struct BinaryHeap {
     }
     // destructor
     ~BinaryHeap() {
-        delete[] data;
     }
 };
-
-template<class T, class Comp>
-void BinaryHeap<T,Comp>::decrease(std::size_t i, const int value) {
-      if (compare(data[i], value)) throw std::invalid_argument("value is not smaller than H[i]");
-      data[i].d = value;
-      bubble_up(i);
-}
 
 #endif // __HEAP__
