@@ -5,5 +5,5 @@ The `graph_utilities.h` header file contains different data structures to be use
 ## Compilation
 Type `make` and an executable named `dijkstra.x` will be generated.
 
-# Timings
+## Timings
 Timings have been taken in nanoseconds.
