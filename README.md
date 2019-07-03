@@ -6,4 +6,4 @@ Author: Federico Pigozzi
 Degree: Data Science and Scientific Computing (DSSC)
 
 Detailed information about the completion of each assignment can be found in the individual folders.
-The code has been well commented.
+The code has been well commented. All the makefiles of this repository include the `make clean` rule to remove all the executables that have been produced.
