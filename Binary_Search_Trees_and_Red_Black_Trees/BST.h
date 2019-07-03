@@ -320,17 +320,14 @@ protected:
    * Remove a key-value pair from the BST, and return a pointer to the 'substitute'
    * @param key the key to use for the deletion
    */
-  virtual void remove(const key_type& key) {
+  virtual node_type* remove(const key_type& key) {
       iterator z{find(key)};
       // if the key is not in the tree, simply return
       if (z == end()) {
-          return;
+          return nullptr;
       }
       node_type* curr{&(*z)};
-      node_type* dummy = remove_aux(curr);  // call the auxiliary remove
-      (void)dummy;  // suppress unused variable warning
-      return;
-      //return remove_aux(curr);
+      return remove_aux(curr);  // call the auxiliary remove
   }
   /**
    * In-order walk of the tree

@@ -127,7 +127,8 @@ class RedBlackTree : public BST<K,V,Comp> {
      */
     RedBlackTree() : base::BST{}, colors{} {}
     /**
-     * Insert into the Red-Black tree a key-value pair, following the algorithm explained in class
+     * Insert into the Red-Black tree a key-value pair, following the algorithm explained in class.
+     * Notice it overrides the parent class's corresponding function.
      */
     void insert(const key_type& key, const value_type& value) override {
         // return pointer to the node just added as if it were a BST
@@ -148,7 +149,6 @@ class RedBlackTree : public BST<K,V,Comp> {
                 curr = fix_case1(curr);
             }
             else {
-                //node_type* g = base::grandparent(curr);
                 // CASE 2: uncle is black, uncle and curr are both right or left children
                 // brings to case 3
                 curr = fix_case2(curr, curr->parent);
@@ -158,142 +158,161 @@ class RedBlackTree : public BST<K,V,Comp> {
             }
         }
     }
-    void delete_case1(node_type* x) {
-        if (x->parent != nullptr) {
-            node_type* s = base::sibling(x);
-            if (color(s) == Color::red) {
-                color(x->parent) = Color::red;
-                color(s) = Color::black;
-            }
-            if (!base::is_right_child(x)) {
-                base::left_rotate(x->parent);
-            }
-            else {
-                base::right_rotate(x->parent);
-            }
-        }
-        //delete_case2(x, s);
-    }
-    void delete_case2(node_type* x, node_type* s) {
-        if ((color(x->parent) == Color::black) && (color(s) == Color::black) &&
-      (color(s->left_child) == Color::black) && (color(s->right_child) == Color::black)) {
-            color(s) = Color::red;
-            delete_case1(x->parent);
+    /**
+      * Fix the tree while removing as in case 1
+      */
+    node_type* fix_remove_case1(node_type* x, node_type* sibling) {
+        // invert colors between x's sibling and x's parent
+        Color temp{color(x->parent)};
+        color(x->parent) = color(sibling);
+        color(sibling) = temp;
+        // rotate x's parent on x's side
+        if (base::is_right_child(x)) {
+             base::right_rotate(x->parent);
         }
         else {
-            delete_case3(x, s);
-        }
-    }
-    void delete_case3(node_type* x, node_type* s) {
-      if ((color(x->parent) == Color::red) && (color(s) == Color::black) &&
-    (color(s->left_child) == Color::black) && (color(s->right_child) == Color::black)) {
-          color(s) = Color::red;
-          color(x->parent) = Color::black;
-      }
-      else {
-          delete_case4(x, s);
-      }
-    }
-    void delete_case4(node_type* x, node_type* s) {
-        if (color(s) == Color::black) {
-            if ((!base::is_right_child(x)) && (color(s->right_child) == Color::black)
-              && (color(s->left_child) == Color::red)) {
-                color(s) = Color::red;
-                color(s->left_child) = Color::black;
-                base::right_rotate(s);
-            }
-            else if ((base::is_right_child(x)) && (color(s->left_child) == Color::black)
-              && (color(s->right_child) == Color::red)) {
-                color(s) = Color::red;
-                color(s->right_child) = Color::black;
-                base::left_rotate(s);
-            }
-        }
-        delete_case5(x, s);
-    }
-    void delete_case5(node_type* x, node_type* s) {
-        color(s) = color(x->parent);
-        color(x->parent) = Color::black;
-        if (!base::is_right_child(x)) {
-            color(s->right_child) = Color::black;
             base::left_rotate(x->parent);
         }
-        else {
-            color(s->left_child) = Color::black;
-            base::right_rotate(x->parent);
+        return x;
+    }
+    /**
+      * Fix the tree while removing as in case 3, when the node x is a right child
+      */
+    node_type* fix_remove_case3_right(node_type* x, node_type* sibling) {
+        // rotate x's sibling on the opposite side with respect to x
+        base::left_rotate(sibling);
+        // invert colors in both old and new sibling of x
+        color(sibling) = Color::red;  // we know sibling is black
+        // invert new sibling's color using a switch-case statement
+        switch(color(base::sibling(x))) {
+            case Color::red :
+                color(base::sibling(x)) = Color::black;
+            case Color::black :
+                color(base::sibling(x)) = Color::red;
+            default :
+                break;
         }
-    }/*
-    void remove(const key_type& key) override {
+        return x;
+    }
+    /**
+      * Fix the tree while removing as in case 3, when the node x is a left child
+      */
+    node_type* fix_remove_case3_left(node_type* x, node_type* sibling) {
+        // rotate x's sibling on the opposite side with respect to x
+        base::left_rotate(sibling);
+        // invert colors in both old and new sibling of x
+        color(sibling) = Color::red;  // we know sibling is black
+        // invert new sibling's color using a switch-case statement
+        switch(color(base::sibling(x))) {
+            case Color::red :
+                color(base::sibling(x)) = Color::black;
+            case Color::black :
+                color(base::sibling(x)) = Color::red;
+            default :
+                break;
+        }
+        return x;
+    }
+    /**
+      * Fix the tree while removing as in case 4, when the node x is a right child. Notice
+      * we do not return a node, since case 4 is guaranteed to fix the tree
+      */
+    void fix_remove_case4_right(node_type* x, node_type* sibling, node_type* left_nephew) {
+        // switch colors between x's sibling and parent
+        Color temp{color(x->parent)};
+        color(x->parent) = color(sibling);
+        color(sibling) = temp;
+        // black color the x's nephew on the opposide side with respect to x
+        color(left_nephew) = Color::black;
+        // rotate x's parent on x side
+        base::right_rotate(x->parent);
+    }
+    /**
+      * Fix the tree while removing as in case 4, when the node x is a left child. Notice
+      * we do not return a node, since case 4 is guaranteed to fix the tree
+      */
+    void fix_remove_case4_left(node_type* x, node_type* sibling, node_type* right_nephew) {
+        // switch colors between x's sibling and parent
+        Color temp{color(x->parent)};
+        color(x->parent) = color(sibling);
+        color(sibling) = temp;
+        // black color the x's nephew on the opposide side with respect to x
+        color(right_nephew) = Color::black;
+        // rotate x's parent on x side
+        base::left_rotate(x->parent);
+    }
+    /**
+      * Remove from a red-black tree the node having key 'key', following the algorithm
+      * explained in class. Notice it overrides the parent class's corresponding function.
+      */
+    node_type* remove(const key_type& key) override {
+        // first look for the key
         typename base::iterator z{base::find(key)};
         // if the key is not in the tree, simply return
         if (z == base::end()) {
-            return;
+            return nullptr;
         }
         node_type* y{&(*z)};
-        node_type* x = base::remove_aux(y);  // call the auxiliary remove and return pointer to 'substitute'
-        if (color(y) == Color::black) {
-            if (color(x) == Color::red) {
-                color(x) = Color::black;
-            }
-            else {
-                delete_case1(x);
-            }
+        // call the parent class's auxiliary remove and return pointer to the node
+        // that substituted y
+        node_type* x = base::remove_aux(y);
+        // if y was red, the red-black tree properties are preserved
+        if (color(y) == Color::red) {
+            return y;
         }
-        if (x == nullptr) {return;}
-        //std::cout << "passed it!" << std::endl;
-        switch(color(y)) {
-            case Color::red :
-                return;
-            case Color::black :
+        // y is black, the branches through x lost one black node
+        else {
+            node_type* sibling = base::sibling(x);
+            // find the nephews of x
+            node_type* right_nephew = sibling->right_child;
+            node_type* left_nephew = sibling->left_child;
+            while (x != base::root && color(x) != Color::red) {
                 if (color(x) == Color::red) {
+                    // CASE 0: x is red. Fixes the tree
+                    // black color x; we increase by one the black height of its subtree and we are done
                     color(x) = Color::black;
-                    return;
                 }
-                else {
-                    bool x_is_right = base::is_right_child(x);
-                    node_type* sibling = (x_is_right) ? x->parent->left_child : x->parent->right_child;
-                    if (color(sibling) == Color::red) {
-                        color(sibling) = Color::black;
-                        color(x->parent) = (color(x->parent) == Color::red) ? Color::black : Color::red;
-                        if (base::is_right_child(x)) {
-                            base::right_rotate(x->parent);
-                        }
-                        else {
-                            base::left_rotate(x->parent);
-                        }
+                else if (color(sibling) == Color::red) {
+                    // CASE 1: x's sibling is red. Cannot occur twice in a row
+                    x = fix_remove_case1(x, sibling);
+                    // update sibling
+                    sibling = x->parent->right_child;
+                }
+                else if (color(sibling) == Color::black) {
+                    if (base::is_right_child(x) && color(left_nephew) == Color::red) {
+                        // CASE 4: x's nephew on the opposite side with respect to x is red. Fixes the tree
+                        fix_remove_case4_right(x, sibling, left_nephew);
+                        break;
                     }
-                    else if (color(sibling) == Color::black && (sibling->left_child != nullptr || color(sibling) == Color::black) && (sibling->right_child != nullptr || color(sibling) == Color::black)) {
+                    else if (!base::is_right_child(x) && color(right_nephew) == Color::red) {
+                        // CASE 4: same as above but on the other side. Fixes the tree
+                        fix_remove_case4_left(x, sibling, right_nephew);
+                        break;
+                    }
+                    else if (base::is_right_child(x) && color(right_nephew) == Color::red) {
+                        // CASE 3: among x's sibling and nephews, only the nephew on the x's side is red. Brings to case 4
+                        x = fix_remove_case3_right(x, sibling);
+                        // update sibling
+                        sibling = x->parent->left_child;
+                    }
+                    else if (!base::is_right_child(x) && color(left_nephew) == Color::red) {
+                        // CASE 3: same as above, but on the other side. Brings to case 4
+                        x = fix_remove_case3_left(x, sibling);
+                        // update sibling
+                        sibling = x->parent->right_child;
+                    }
+                    else {
+                        // CASE 2: x's sibling and nephews are black. Pushes the problem one step towards the root
+                        // red color x's sibling
                         color(sibling) = Color::red;
-                    }
-                    else if (color(sibling) == Color::black) {
-                        if ((x_is_right && color(sibling->right_child) == Color::red && color(sibling->left_child) == Color::black) || (!x_is_right && color(sibling->left_child) == Color::red && color(sibling->right_child) == Color::black)) {
-                            if (x_is_right) {
-                                base::left_rotate(sibling);
-                            }
-                            else {
-                                base::right_rotate(sibling);
-                            }
-                            color(sibling) = Color::red;
-                            node_type* new_sibling = (x_is_right) ? x->parent->left_child : x->parent->right_child;
-                            color(new_sibling) = (color(new_sibling) == Color::red) ? Color::black : Color::red;
-                        }
-                        else {
-                            color(sibling) = Color::red;
-                            color(x->parent) = (color(x->parent) == Color::red) ? Color::black : Color::red;
-                            if (x_is_right) {
-                                color(sibling->left_child) = Color::black;
-                                base::right_rotate(x->parent);
-                            }
-                            else {
-                                color(sibling->right_child) = Color::black;
-                                base::left_rotate(x->parent);
-                            }
-                        }
+                        x = x->parent;
                     }
                 }
-            default : break;
+            }
         }
-    }*/
+        // return the removed node
+        return y;
+    }
     /**
      * Default destructor
      */
@@ -301,23 +320,5 @@ class RedBlackTree : public BST<K,V,Comp> {
 };
 
 int main() {
-    //BST<int,double> bst{};
-    RedBlackTree<int,double> rbt{};
-    for (auto elem : {6, 5, 1}){//, 4, 1, 2, 7, 8, 3, 9}) {//{6, 2, 1, 4, 3, 5}
-        //std::cout << "#####" << std::endl;
-        rbt.insert(elem, 0.0);
-        //std::cout << rbt;
-    }
-    //RedBlackTree<int,double> rbt{};
-    //internal::RedBlackNode<int,double> dummy{1, 0.0, nullptr, internal::Color::red};
-    //std::cout << dummy.data.first << " " << dummy.data.second << " " << std::endl;
-    //for (auto elem : {6, 5, 4, 1, 2, 7, 8, 3, 9}) {
-    //    rbt.remove(elem);
-    //}
-    //rbt.remove(5);
-    //std::cout << rbt;
-    //rbt.test();
-    //rbt.in_order_walk();
-    //std::cout << bst;
     return 0;
 }
