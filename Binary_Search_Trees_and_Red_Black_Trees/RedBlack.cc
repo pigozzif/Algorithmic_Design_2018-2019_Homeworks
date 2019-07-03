@@ -276,7 +276,12 @@ class RedBlackTree : public BST<K,V,Comp> {
                     // CASE 1: x's sibling is red. Cannot occur twice in a row
                     x = fix_remove_case1(x, sibling);
                     // update sibling
-                    sibling = x->parent->right_child;
+                    if (base::is_right_child(x)) {
+                        sibling = x->parent->right_child;
+                    }
+                    else {
+                        sibling = x->parent->left_child;
+                    }
                 }
                 else if (color(sibling) == Color::black) {
                     if (base::is_right_child(x) && color(left_nephew) == Color::red) {
