@@ -5,9 +5,9 @@
  * utility functions have been dismissed; 2) A set of members has been moved from private to protected visibility, to
  * allow for inheritance in the RedBlackTree class (see RedBlack.cc file).
  * For what concerns upgrades, different functionalities have been added. In particular:
- * 1) A 'remove' and auxiliary functions have been implemented. You can find them at lines 265-273 and 160-182 respectively.
+ * 1) A 'remove' and auxiliary functions have been implemented. You can find them at lines 190-216 and 319-331 respectively.
  * 2) A bunch of useful private functions, including 'family' relations ('uncle', 'grandparent', 'is_right_child'),
- *    right and left rotations, and the 'transplant' routine. You can find them all at lines 65-148 and 443-459.
+ *    right and left rotations, and the 'transplant' routine. You can find them all at lines 61-189.
  */
 
 #ifndef __BST_H__
